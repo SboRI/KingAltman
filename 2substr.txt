@@ -1,0 +1,6 @@
+e, k1; A, EA
+EA, k-1, E
+EA, k2; B, EAB/EPQ
+EAB/EPQ, k3, EQ
+EQ, k-3; P, EAB/EPQ
+EQ, k4, E
