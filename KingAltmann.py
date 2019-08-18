@@ -1,5 +1,6 @@
 from typing import Optional, List, Tuple
 from sympy import symbols
+from pandas import DataFrame
 
 
 class Enzymestate():
@@ -42,8 +43,33 @@ class UnitReaction():
         self.to_state = to_State
         self.rate = rate
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.from_state == other.from_state and self.to_state == other.to_state and self.rate == other.rate
+        return False
+
     def __str__(self):
         return f"{self.from_state} \t --{self.rate}--> \t {self.to_state}"
+
+
+class UniDirReaction():
+
+    def __init__(self, fwd_reaction: UnitReaction, rev_reaction: UnitReaction):
+        self._fwd_reaction = fwd_reaction
+        self._rev_reaction = rev_reaction
+
+    def contains_Rate(self, rate: Optional[ReactionRate]):
+        if not rate:
+            return False
+        return rate == self._fwd_reaction.rate or rate == self._rev_reaction.rate
+
+    def contains_reaction(self, reaction: Optional[UnitReaction]) -> bool:
+        if not reaction:
+            return False
+        return (reaction == self._fwd_reaction or reaction == self._rev_reaction)
+
+    def __str__(self):
+        return f"{self._fwd_reaction.rate}//{self._rev_reaction.rate}"
 
 
 class Reactions():
@@ -54,7 +80,7 @@ class Reactions():
         self._enzymeStates: List[Enzymestate] = []
         """list of all UNIQUE enzyme states"""
 
-        self._bidirectionalRates: List[Tuple[ReactionRate, ReactionRate]] = []
+        self._bidirectionalRates: List[UniDirReaction] = []
         """List of all bidirectional couples, (ki[a], k-1) from E -> k1[a] -> EA, EA -> k-1 -> E)"""
 
     def addReaction(self, reaction: UnitReaction):
@@ -74,7 +100,7 @@ class Reactions():
         """ adds a bidirectional rate Tuple if it doesn't exist yet and both directions exist in the network"""
 
         # if the rate has already been used, it is added a second time, which shouldn't happen
-        if any([reaction.rate in t for t in self._bidirectionalRates]):
+        if any([bi.contains_reaction(reaction) for bi in self._bidirectionalRates]):
             raise AttributeError(
                 "Added a unitreaction with the same rate constant a second time")
 
@@ -84,7 +110,7 @@ class Reactions():
             return
         else:
             self._bidirectionalRates.append(
-                (reaction.rate, reverseReaction.rate)
+                UniDirReaction(reaction, reverseReaction)
             )
 
     def as_text(self) -> str:
@@ -113,6 +139,19 @@ class Reactions():
         """Returns the unitreaction which contains the ReactionRate rate"""
         return list(filter(lambda reac: reac.rate == rate, self._reactions))
 
+    def reaction_from_Reactants(self, from_state: Enzymestate, to_state: Enzymestate) -> Optional[UnitReaction]:
+        res: List[UnitReaction] = list(filter(
+            lambda reaction: reaction.from_state == from_state and reaction.to_state == to_state, self._reactions))
+
+        if len(res) == 0:
+            return None
+
+        if len(res) > 1:
+            raise AttributeError(
+                "more than 1 reaction with identical reactants defined")
+
+        return res[0]
+
     def produced_by(self, e: Enzymestate) -> List[UnitReaction]:
         """Returns all UnitReactions that produce input enzyme state {e}"""
         return list(filter(lambda react: react.to_state == e, self._reactions))
@@ -121,19 +160,34 @@ class Reactions():
         """Returns all UnitReactions that consume input enzyme state e"""
         return list(filter(lambda react: react.from_state == e, self._reactions))
 
-    def linear_graph_matrix(self):
+    def linear_graph_matrix(self) -> List[List[Optional[UniDirReaction]]]:
         """ Returns the linear graph structure (Qi...Beard 2008, BMC Bioinfo Eq. 4) of the reaction network."""
-        pass
+        kin_matrix = self.kinetic_matrix()
 
-    def kinetic_matrix(self):
+        # res[i][j] UNIDIRECTIONAL ReactionRate for ENzymstate i -> Enzymstate j
+        res: List[List[Optional[UniDirReaction]]] = [
+            [None for _ in self._enzymeStates] for _ in self._enzymeStates]
+        for n_es1, _ in enumerate(self._enzymeStates):
+            for n_es2, _ in enumerate(self._enzymeStates):
+                _res = None if kin_matrix[n_es1][n_es2] == None else list(
+                    filter(lambda uniDirect: uniDirect.contains_Rate(kin_matrix[n_es1][n_es2]), self._bidirectionalRates))[0]
+                res[n_es1][n_es2] = _res
+        return res
+
+    def kinetic_matrix(self) -> List[List[Optional[ReactionRate]]]:
         """ Returns the kinetic matrix (Qi...Beard 2008, BMC Bioinfo Eq. 5) of the reaction network."""
-        pass
 
+        # res[i][j] ReactionRate for ENzymstate i -> Enzymstate j
+        res: List[List[Optional[ReactionRate]]] = [
+            [None for _ in self._enzymeStates] for _ in self._enzymeStates]
 
-class uniReaction():
+        for n_es1, es1 in enumerate(self._enzymeStates):
+            for n_es2, es2 in enumerate(self._enzymeStates):
+                reac = self.reaction_from_Reactants(es1, es2)
+                _res = reac.rate if reac else None
+                res[n_es1][n_es2] = _res
 
-    def __init__(self, reaction: Reactions):
-        self._bidirectional = reaction
+        return res
 
 
 # read Reaction mechanism
@@ -162,7 +216,11 @@ with open("2substr.txt", "r") as infile:
         reaction = UnitReaction(es1, rrate, es2)
         mechanism.addReaction(reaction)
 
-[print(f'{a}, {b}') for a, b in mechanism._bidirectionalRates]
+# es1 = Enzymestate("E")
+# es2 = Enzymestate("EAB/EPQ")
+
+print(DataFrame(mechanism.linear_graph_matrix()))
+
 
 # k_0 = ReactionRate("k1")
 # k_1 = ReactionRate("k-1", "A")
