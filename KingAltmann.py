@@ -1,6 +1,63 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Any
 from sympy import symbols
 from pandas import DataFrame
+from random import randint
+
+
+class Wang_algebra():
+
+    @staticmethod
+    def wang_product(ele: List[List[Any]]):
+        """Alphanumeric multiplication according to wang rules: x * x = 0, y*x + y*x = 0"""
+
+        def wang_multiply(a: List[Any], b: List[Any]):
+            res = []
+            for el_b in b:
+                _res = a + [el_b]
+                res.append(_res)
+            return res
+
+        elements = list(ele)
+
+        # nothing to multiply
+        if len(elements) < 2:
+            return elements
+
+        # First round of the algorithm has a flat list [a,b,c] as element 0, helper algorithm needs [a] as input, so put the elements in a list
+        res: List[Any] = [[e] for e in elements.pop(0)]
+        while len(elements) >= 1:
+            term1 = elements.pop(0)
+            #print(f'current: {res}, multiplyinng with {term1}')
+
+            _res = []
+            for el in res:
+                wang_prods = wang_multiply(el, term1)
+                for result in wang_prods:
+                    #
+                    _res.append(result)
+
+                for n_el, el in enumerate(_res):
+                    # wang rule 1: x*x = 0
+                    if len(set(el)) < len(el):
+                        #print(f'delete x*x = 0, el: {el}')
+                        _res[n_el] = []
+
+                    # wang rule 2: xy + yx = 0, iterate over all elements and compare if 2 sets of elements are equal.
+                    # Skip the comparison of the element to itself
+                    for n_el2, el2 in enumerate(_res):
+                        if n_el2 == n_el:
+                            break
+                        if set(el) == set(el2):
+                            #print(f'delete xy + xy = 0, els = {el}, {el2}')
+                            _res[n_el] = []
+                            _res[n_el2] = []
+
+                _res = list(filter(lambda el: len(el) > 0, _res))
+            res = _res
+
+            #print(f'result: {res}')
+
+        return res
 
 
 class Enzymestate():
@@ -68,6 +125,15 @@ class BiDirReaction():
         if not reaction:
             return False
         return (reaction == self._fwd_reaction or reaction == self._rev_reaction)
+
+    def produces(self, enzymestate: Enzymestate) -> Optional[UnitReaction]:
+        if self._fwd_reaction.to_state == enzymestate:
+            return self._fwd_reaction
+
+        if self._rev_reaction.to_state == enzymestate:
+            return self._rev_reaction
+
+        return None
 
     def __str__(self):
         return f"{self._fwd_reaction.rate}//{self._rev_reaction.rate}"
@@ -190,7 +256,62 @@ class Reactions():
 
         return res
 
+    def kaPatterns(self):
+        # make a dictionary to replace bidirectional rates with numbers
+        # create a matrix equal to the linear_graph_matrix but with numbers
+        ratesDict = dict()
+        lin_graph = self.linear_graph_matrix()
+        lin_graph_numbers = [[None for _ in self._enzymeStates]
+                             for _ in self._enzymeStates]
 
+        for x, rate in enumerate(self._bidirectionalRates):
+            rateNumber = x+1
+            ratesDict[rateNumber] = rate
+            for n, el in enumerate(lin_graph):
+                for m, birate in enumerate(el):
+                    if birate == rate:
+                        lin_graph_numbers[n][m] = rateNumber
+
+        deleteEnzymestate = randint(0, len(lin_graph_numbers) - 1)
+
+        lin_graph_numbers.pop(deleteEnzymestate)
+        wang_patterns = [list(filter(lambda x:x != None, el))
+                         for el in lin_graph_numbers]
+        wang_products = Wang_algebra.wang_product(wang_patterns)
+
+        res = []
+        for rates in wang_products:
+            _res = []
+            for n in rates:
+                _res.append(ratesDict[n])
+            res.append(_res)
+        return res
+
+    def directedPatterns(self, state: Enzymestate):
+        kaPatterns = self.kaPatterns()
+
+        def directedPattern(pattern: List[BiDirReaction]):
+            pattern = list(pattern)
+            print(DataFrame(pattern))
+            target = state
+            res: List[ReactionRate] = []
+            while len(pattern) > 0:
+                for n_, biDir in enumerate(pattern):
+                    reaction = biDir.produces(target)
+                    if reaction:
+                        res.append(reaction.rate)
+                        target = reaction.from_state
+                        pattern.pop(n_)
+                        break
+
+        res = []
+        for pattern in kaPatterns:
+            res.append(directedPattern(pattern))
+            print(DataFrame(res))
+
+        return res
+
+        # find rate that produces said enzyme form
 # read Reaction mechanism
 mechanism = Reactions()
 
@@ -217,24 +338,13 @@ with open("2substr.txt", "r") as infile:
         reaction = UnitReaction(es1, rrate, es2)
         mechanism.addReaction(reaction)
 
-# es1 = Enzymestate("E")
-# es2 = Enzymestate("EAB/EPQ")
 
-print(DataFrame(mechanism.linear_graph_matrix()))
+print(DataFrame(mechanism.directedPatterns(Enzymestate("E"))))
 
 
-# k_0 = ReactionRate("k1")
-# k_1 = ReactionRate("k-1", "A")
+# l1, l2, l3, l4 = [1, 2, 6], [1, 4], [3, 4, 5], [5, 6]
 
-# E1, E0 = [Enzymestate(name) for name in ["EA", "E"]]
-
-# r1 = UnitReaction(E0, k_0, E1)
-# r2 = UnitReaction(E1, k_1, E0)
-
-# scheme = Reactions()
-# scheme.addReaction(r1)
-# scheme.addReaction(r2)
-
-# print(scheme.as_text())
-
-# print(k_0.reactant is None)
+# reacs = [l1, l2, l3, l4]
+# res = Wang_algebra.wang_product(reacs)
+# res = [sorted(el) for el in res]
+# print(f'{len(res)} products: {res}')
