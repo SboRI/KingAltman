@@ -52,7 +52,8 @@ class UnitReaction():
         return f"{self.from_state} \t --{self.rate}--> \t {self.to_state}"
 
 
-class UniDirReaction():
+class BiDirReaction():
+    """Constructs a Non/Bi directional rate from 2 unit reactions"""
 
     def __init__(self, fwd_reaction: UnitReaction, rev_reaction: UnitReaction):
         self._fwd_reaction = fwd_reaction
@@ -80,7 +81,7 @@ class Reactions():
         self._enzymeStates: List[Enzymestate] = []
         """list of all UNIQUE enzyme states"""
 
-        self._bidirectionalRates: List[UniDirReaction] = []
+        self._bidirectionalRates: List[BiDirReaction] = []
         """List of all bidirectional couples, (ki[a], k-1) from E -> k1[a] -> EA, EA -> k-1 -> E)"""
 
     def addReaction(self, reaction: UnitReaction):
@@ -97,7 +98,7 @@ class Reactions():
                 self._enzymeStates.append(e)
 
     def _add_bidirectionalRates(self, reaction: UnitReaction):
-        """ adds a bidirectional rate Tuple if it doesn't exist yet and both directions exist in the network"""
+        """ adds a bidirectional Rate (Tuple) if it doesn't exist yet and both directions exist in the network"""
 
         # if the rate has already been used, it is added a second time, which shouldn't happen
         if any([bi.contains_reaction(reaction) for bi in self._bidirectionalRates]):
@@ -110,7 +111,7 @@ class Reactions():
             return
         else:
             self._bidirectionalRates.append(
-                UniDirReaction(reaction, reverseReaction)
+                BiDirReaction(reaction, reverseReaction)
             )
 
     def as_text(self) -> str:
@@ -160,17 +161,17 @@ class Reactions():
         """Returns all UnitReactions that consume input enzyme state e"""
         return list(filter(lambda react: react.from_state == e, self._reactions))
 
-    def linear_graph_matrix(self) -> List[List[Optional[UniDirReaction]]]:
+    def linear_graph_matrix(self) -> List[List[Optional[BiDirReaction]]]:
         """ Returns the linear graph structure (Qi...Beard 2008, BMC Bioinfo Eq. 4) of the reaction network."""
         kin_matrix = self.kinetic_matrix()
 
-        # res[i][j] UNIDIRECTIONAL ReactionRate for ENzymstate i -> Enzymstate j
-        res: List[List[Optional[UniDirReaction]]] = [
+        # res[i][j] BIDIRECTIONAL ReactionRate for ENzymstate i -> Enzymstate j
+        res: List[List[Optional[BiDirReaction]]] = [
             [None for _ in self._enzymeStates] for _ in self._enzymeStates]
         for n_es1, _ in enumerate(self._enzymeStates):
             for n_es2, _ in enumerate(self._enzymeStates):
                 _res = None if kin_matrix[n_es1][n_es2] == None else list(
-                    filter(lambda uniDirect: uniDirect.contains_Rate(kin_matrix[n_es1][n_es2]), self._bidirectionalRates))[0]
+                    filter(lambda biDirect: biDirect.contains_Rate(kin_matrix[n_es1][n_es2]), self._bidirectionalRates))[0]
                 res[n_es1][n_es2] = _res
         return res
 
