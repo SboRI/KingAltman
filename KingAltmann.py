@@ -1,7 +1,9 @@
+#%%
 from typing import Optional, List, Tuple, Any
 from sympy import symbols
 from pandas import DataFrame
 from random import randint
+
 
 
 class Wang_algebra():
@@ -119,7 +121,7 @@ class BiDirReaction():
     def contains_Rate(self, rate: Optional[ReactionRate]):
         if not rate:
             return False
-        return rate == self._fwd_reaction.rate or rate == self._rev_reaction.rate
+        return (rate == self._fwd_reaction.rate or rate == self._rev_reaction.rate)
 
     def contains_reaction(self, reaction: Optional[UnitReaction]) -> bool:
         if not reaction:
@@ -273,8 +275,8 @@ class Reactions():
                         lin_graph_numbers[n][m] = rateNumber
 
         deleteEnzymestate = randint(0, len(lin_graph_numbers) - 1)
-
         lin_graph_numbers.pop(deleteEnzymestate)
+
         wang_patterns = [list(filter(lambda x:x != None, el))
                          for el in lin_graph_numbers]
         wang_products = Wang_algebra.wang_product(wang_patterns)
@@ -288,34 +290,45 @@ class Reactions():
         return res
 
     def directedPatterns(self, state: Enzymestate):
+        # find rate that produces said enzyme form
         kaPatterns = self.kaPatterns()
-
         def directedPattern(pattern: List[BiDirReaction]):
             pattern = list(pattern)
-            print(DataFrame(pattern))
+            
+            res: List[UnitReaction] = [] #store the unitreactions that produce target Enzymestate
             target = state
-            res: List[ReactionRate] = []
             while len(pattern) > 0:
+                reactions_to_delete = []
                 for n_, biDir in enumerate(pattern):
-                    reaction = biDir.produces(target)
-                    if reaction:
-                        res.append(reaction.rate)
-                        target = reaction.from_state
-                        pattern.pop(n_)
-                        break
+                    target_reaction = biDir.produces(target)
+                    if target_reaction:
+                        res.append(target_reaction)
+                        
+                for reaction in res:
+                    pattern = list(filter(lambda biDirRate: not biDirRate.contains_Rate(reaction.rate), pattern))
+                for reaction in res:
+                    target = reaction.from_state
+                    for n_, biDir in enumerate(pattern):
+                        target_reaction = biDir.produces(target)
+                        if target_reaction:
+                            res.append(target_reaction)
+                    for reaction in res:
+                        pattern = list(filter(lambda biDirRate: not biDirRate.contains_Rate(reaction.rate), pattern))
+
+            return [el.rate for el in res]
 
         res = []
         for pattern in kaPatterns:
             res.append(directedPattern(pattern))
-            print(DataFrame(res))
+            #print(DataFrame(res))
 
         return res
 
-        # find rate that produces said enzyme form
+        
 # read Reaction mechanism
 mechanism = Reactions()
 
-with open("2substr.txt", "r") as infile:
+with open("fumarase.txt", "r") as infile:
     for count, line in enumerate(infile):
         # skip comments and empty lines
         if line.startswith("#") or len(line.strip()) == 0:
@@ -338,9 +351,9 @@ with open("2substr.txt", "r") as infile:
         reaction = UnitReaction(es1, rrate, es2)
         mechanism.addReaction(reaction)
 
-
-print(DataFrame(mechanism.directedPatterns(Enzymestate("E"))))
-
+for state in mechanism._enzymeStates:
+    print(f'Enzymestate: {state}')
+    print(DataFrame(mechanism.directedPatterns(state)))
 
 # l1, l2, l3, l4 = [1, 2, 6], [1, 4], [3, 4, 5], [5, 6]
 
@@ -348,3 +361,5 @@ print(DataFrame(mechanism.directedPatterns(Enzymestate("E"))))
 # res = Wang_algebra.wang_product(reacs)
 # res = [sorted(el) for el in res]
 # print(f'{len(res)} products: {res}')
+
+
