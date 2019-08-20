@@ -1,8 +1,9 @@
-#%%
 from typing import Optional, List, Tuple, Any
 from sympy import symbols
+import sympy
 from pandas import DataFrame
 from random import randint
+from functools import reduce
 
 
 
@@ -73,6 +74,8 @@ class Enzymestate():
         if isinstance(other, self.__class__):
             return self.enzyme == other.enzyme
         return False
+    def to_value(self):
+        return self.enzyme
 
 
 class ReactionRate():
@@ -94,6 +97,11 @@ class ReactionRate():
         if isinstance(other, self.__class__):
             return self.name == other.name
         return False
+    
+    def to_value(self) -> symbols:
+        if self.reactant:
+            return self.name * self.reactant
+        return self.name
 
 
 class UnitReaction():
@@ -152,6 +160,15 @@ class Reactions():
         self._bidirectionalRates: List[BiDirReaction] = []
         """List of all bidirectional couples, (ki[a], k-1) from E -> k1[a] -> EA, EA -> k-1 -> E)"""
 
+        self._product_forming_complex = []
+        """List of all [E]*rate which are producing the product your are looking for, e.g. dp/dt = + [ES/EP]*k6"""
+
+        self._product_consuming_complex = []
+        """List of all [E]*rate which are consuming the product your are looking for, e.g. dp/dt = - [E]*k-6 *[P]"""
+
+        self._null_rates = []
+        """List of rates and concentrations that are considered to be 0, e.g. for irreversible reactions k-1 = 0, or for v_o conditions [P]=0""" 
+
     def addReaction(self, reaction: UnitReaction):
         if len(self.reaction_from_Rate(reaction.rate)) > 0:
             raise AttributeError("rate constant already defined")
@@ -181,6 +198,11 @@ class Reactions():
             self._bidirectionalRates.append(
                 BiDirReaction(reaction, reverseReaction)
             )
+    def add_product_forming_complex(self, e: Enzymestate, r: ReactionRate):
+        self._product_forming_complex.append([e, r])
+
+    def add_product_consuming_complex(self, e: Enzymestate, r: ReactionRate):
+        self._product_consuming_complex.append([e, r])
 
     def as_text(self) -> str:
         res = []
@@ -289,7 +311,7 @@ class Reactions():
             res.append(_res)
         return res
 
-    def directedPatterns(self, state: Enzymestate):
+    def directedPatterns(self, state: Enzymestate) -> List[List[ReactionRate]]:
         # find rate that produces said enzyme form
         kaPatterns = self.kaPatterns()
         def directedPattern(pattern: List[BiDirReaction]):
@@ -324,36 +346,150 @@ class Reactions():
 
         return res
 
+    def _pattern_to_equation(self, directedPattern: List[List[ReactionRate]]):
+        def my_multiply(singlePattern: List[ReactionRate]):
+            return reduce(lambda x,y: x*y.to_value(),singlePattern, 1)
+        
+
+        return reduce(lambda x, y: x + my_multiply(y), directedPattern, 0)
+    
+    def numerator(self, enzymstate: Enzymestate):
+        pat = self.directedPatterns(enzymstate)
+        return self._pattern_to_equation(pat)
+
+    def denominator(self):
+        nominators = [self._pattern_to_equation(self.directedPatterns(state)) for state in self._enzymeStates]
+        return reduce(lambda x,y: x + y, nominators).simplify()
+    
+    def product_term_summation(self, product_terms: List[List[Any]], with_full_numerator=True):
+        def term_helper(enz_rate: List[Any]):
+            state=enz_rate[0]
+            rate=enz_rate[1]
+            numerator = self.numerator(state)
+            return rate.to_value() * numerator 
+        
+        res = None
+
+        if with_full_numerator:
+            _res = map(lambda e_r: term_helper(e_r), product_terms)
+            res = reduce(lambda x, y: x + y, _res)
+        
+        else:
+            _res = map(lambda e_r: e_r[0].to_value() * e_r[1].to_value(), product_terms)
+            res = reduce(lambda x,y: x+y, _res)
+
+        return res.simplify()*symbols("E_{0}")
+
+    def solve_for_product(self, with_full_numerator=True):
+        product_forming = self.product_term_summation(self._product_forming_complex, with_full_numerator)
+        product_consuming = self.product_term_summation(self._product_consuming_complex, with_full_numerator)
+        denominator = self.denominator()
+        return ((product_forming - product_consuming)/denominator).simplify()
+
+    def simplify_null_pathways(self):
+        eq = self.solve_for_product()
+        for el in self._null_rates:
+            eq = eq.subs(el, 0)
+        return eq
+
+
+
+
         
 # read Reaction mechanism
 mechanism = Reactions()
 
-with open("fumarase.txt", "r") as infile:
-    for count, line in enumerate(infile):
-        # skip comments and empty lines
-        if line.startswith("#") or len(line.strip()) == 0:
-            break
-        els: List[str] = line.split(',')
+with open("2substr.txt", "r") as infile:
+    def check_input_items(els):
         if len(els) != 3:
             raise TypeError(
                 f"Infile line {count+1}:expected 3 comma separated values per line, instead got:\n{line}")
-
-        e1, rate, e2 = els[0].strip(), els[1].split(';'), els[2]
-
+    
+    def check_rate(rate):
         if len(rate) < 1 or len(rate) > 2:
             raise TypeError(
                 "Rate costant must be given as 1 parameter or 2 parameters seperated by \";\"")
 
-        es1 = Enzymestate(e1)
-        es2 = Enzymestate(e2)
-        rrate = ReactionRate(*[x.strip() for x in rate])
 
-        reaction = UnitReaction(es1, rrate, es2)
-        mechanism.addReaction(reaction)
 
+    
+    def sanitize_inputs(line):
+        els: List[str] = line.split(',')
+        check_input_items(els)
+        e1, rate, e2 = els[0].strip(), els[1].split(';'), els[2]
+        rate = [x.strip() for x in rate]
+        check_rate(rate)
+        return e1, rate, e2
+
+ 
+
+    for count, line in enumerate(infile):
+        is_product_pos = False
+        is_product_neg = False
+        is_null_pathway = False
+
+        def is_reaction_line():
+            res= (is_product_pos or is_product_neg or is_null_pathway)
+            return not res
+        # skip comments and empty lines
+        if line.startswith("#") or len(line.strip()) == 0:
+            continue
+        if line.startswith('=+:'):
+            is_product_pos = True
+            line=line.replace('=+:', '')
+        if line.startswith('=-:'):
+            is_product_neg = True
+            line=line.replace('=-:', '')
+        if line.startswith('=0:'):
+            is_null_pathway = True
+            line=line.replace('=0:', '')
+    
+        if is_product_pos or is_product_neg:
+            e1, rate, _ = sanitize_inputs(line)
+            es1 = Enzymestate(e1)
+            rrate = ReactionRate(*rate)
+            if is_product_pos:
+                mechanism.add_product_forming_complex(es1, rrate)
+            if is_product_neg:
+                mechanism.add_product_consuming_complex(es1, rrate)
+        
+        if is_reaction_line():
+            e1, rate, e2 = sanitize_inputs(line)
+            es1 = Enzymestate(e1)
+            es2 = Enzymestate(e2)
+            rrate = ReactionRate(*rate)
+            unitReaction = UnitReaction(es1, rrate, es2)
+            mechanism.addReaction(unitReaction)
+        
+        if is_null_pathway:
+            for nulls in line.split(','):
+                if not len(nulls.strip())==0:
+                    mechanism._null_rates.append(symbols(nulls.strip()))
+            
+
+        
+
+
+# reactionR = ReactionRate("k1", "A")
+# print(reactionR.to_value().subs(symbols("A"), 1))
 for state in mechanism._enzymeStates:
     print(f'Enzymestate: {state}')
-    print(DataFrame(mechanism.directedPatterns(state)))
+    print(mechanism.numerator(state))
+
+print(f'Denominator:\n{mechanism.denominator()}')
+
+print("simple")
+sympy.pprint(mechanism.solve_for_product(False))
+
+print("complex")
+sympy.pprint(mechanism.solve_for_product())
+
+print(DataFrame(mechanism._null_rates))
+
+print("with zero")
+with_zero = mechanism.simplify_null_pathways()
+sympy.pprint(with_zero)
+sympy.preview(with_zero, output="dvi", viewer="file", filename="prev")
 
 # l1, l2, l3, l4 = [1, 2, 6], [1, 4], [3, 4, 5], [5, 6]
 

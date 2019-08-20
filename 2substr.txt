@@ -1,9 +1,14 @@
 E, k1; A, EA
-EA, k-1, E
+EA, k_-1, E
 EA, k2; B, EAB/EPQ
-EAB/EPQ, k-2, EA
+EAB/EPQ, k_-2, EA
 EAB/EPQ, k3, EQ
-EQ, k-3; P, EAB/EPQ
+EQ, k_-3; P, EAB/EPQ
 EQ, k4, E
-E, k-4; Q, EQ
+E, k_-4; Q, EQ
 
+# comment
+=+: EAB/EPQ, k3, 
+=-: EQ, k_-3; P, 
+
+=0:P, Q,
