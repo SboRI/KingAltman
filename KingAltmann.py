@@ -348,18 +348,18 @@ class Reactions():
 
     def _pattern_to_equation(self, directedPattern: List[List[ReactionRate]]):
         def my_multiply(singlePattern: List[ReactionRate]):
-            return reduce(lambda x,y: x*y.to_value(),singlePattern, 1)
+            return reduce(lambda x,y: x*y.to_value(),singlePattern, 1).factor()
         
 
         return reduce(lambda x, y: x + my_multiply(y), directedPattern, 0)
     
     def numerator(self, enzymstate: Enzymestate):
         pat = self.directedPatterns(enzymstate)
-        return self._pattern_to_equation(pat)
+        return sympy.factor(self._pattern_to_equation(pat), deep=True)
 
     def denominator(self):
         nominators = [self._pattern_to_equation(self.directedPatterns(state)) for state in self._enzymeStates]
-        return reduce(lambda x,y: x + y, nominators).simplify()
+        return sympy.factor(reduce(lambda x,y: x + y, nominators))
     
     def product_term_summation(self, product_terms: List[List[Any]], with_full_numerator=True):
         def term_helper(enz_rate: List[Any]):
@@ -390,7 +390,7 @@ class Reactions():
         eq = self.solve_for_product()
         for el in self._null_rates:
             eq = eq.subs(el, 0)
-        return eq
+        return eq.factor()
 
 
 
@@ -399,7 +399,7 @@ class Reactions():
 # read Reaction mechanism
 mechanism = Reactions()
 
-with open("2substr.txt", "r") as infile:
+with open("UPO.txt", "r") as infile:
     def check_input_items(els):
         if len(els) != 3:
             raise TypeError(
@@ -460,6 +460,7 @@ with open("2substr.txt", "r") as infile:
             rrate = ReactionRate(*rate)
             unitReaction = UnitReaction(es1, rrate, es2)
             mechanism.addReaction(unitReaction)
+
         
         if is_null_pathway:
             for nulls in line.split(','):
@@ -489,8 +490,8 @@ print(DataFrame(mechanism._null_rates))
 print("with zero")
 with_zero = mechanism.simplify_null_pathways()
 sympy.pprint(with_zero)
-sympy.preview(with_zero, output="dvi", viewer="file", filename="prev")
-
+with open("out2.tex", "w") as outfile:
+    outfile.write(sympy.pretty(with_zero))
 # l1, l2, l3, l4 = [1, 2, 6], [1, 4], [3, 4, 5], [5, 6]
 
 # reacs = [l1, l2, l3, l4]
