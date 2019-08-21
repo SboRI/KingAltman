@@ -399,7 +399,7 @@ class Reactions():
 # read Reaction mechanism
 mechanism = Reactions()
 
-with open("UPO.txt", "r") as infile:
+with open("upo.txt", "r") as infile:
     def check_input_items(els):
         if len(els) != 3:
             raise TypeError(
@@ -490,8 +490,25 @@ print(DataFrame(mechanism._null_rates))
 print("with zero")
 with_zero = mechanism.simplify_null_pathways()
 sympy.pprint(with_zero)
-with open("out2.tex", "w") as outfile:
-    outfile.write(sympy.pretty(with_zero))
+
+
+k_ib = symbols("K_iB")
+k_ma = symbols("K_mA")
+k_ma2 = symbols("K_mA2")
+k_mb = symbols("K_mB")
+k_1, k_2, k_3, k_4, k_5, k_6, k_7, k_8 =symbols(["k_"+str((x+1)*-1) for x in range(8)])
+k1, k2, k3, k4, k5, k6, k7, k8 = symbols("k1:9")
+
+
+eq = with_zero.subs(k8, k_8/k_ib)
+
+eq = eq.subs(k1, (k_1 + k2)/k_ma)
+eq = eq.subs(k4, (k_4+k7)/k_ma2)
+eq.subs(k3, (k_3+k6)/k_mb)
+pprint(eq.factor())
+
+# with open("out2.tex", "w") as outfile:
+#     outfile.write(sympy.latex(with_zero))
 # l1, l2, l3, l4 = [1, 2, 6], [1, 4], [3, 4, 5], [5, 6]
 
 # reacs = [l1, l2, l3, l4]
