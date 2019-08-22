@@ -501,14 +501,16 @@ k1, k2, k3, k4, k5, k6, k7, k8 = symbols("k1:9")
 
 
 eq = with_zero.subs(k8, k_8/k_ib)
-
 eq = eq.subs(k1, (k_1 + k2)/k_ma)
 eq = eq.subs(k4, (k_4+k7)/k_ma2)
-eq.subs(k3, (k_3+k6)/k_mb)
-pprint(eq.factor())
+eq = eq.subs(k3, (k_3+k6)/k_mb)
+eq = sympy.pprint(eq.factor())
 
-# with open("out2.tex", "w") as outfile:
-#     outfile.write(sympy.latex(with_zero))
+with open("out2.tex", "w") as outfile:
+    outfile.write(sympy.latex(eq))
+
+
+
 # l1, l2, l3, l4 = [1, 2, 6], [1, 4], [3, 4, 5], [5, 6]
 
 # reacs = [l1, l2, l3, l4]
