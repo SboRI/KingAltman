@@ -4,6 +4,19 @@
 \usepackage{hyperref}
 \usepackage[latin1]{inputenc}
 \usepackage{breqn}
+
+\newcommand{\kma}{K_{mA}}
+\newcommand{\kmaa}{K_{mA2}}
+\newcommand{\kmb}{K_{mB}}
+\newcommand{\kib}{K_{iB}}
+\newcommand{\A}{[A]}
+\newcommand{\B}{[B]}
+
+
+
+
+
+
 \begin{document}
 
 \begin{dgroup}
@@ -13,6 +26,20 @@
 \begin{dmath}N = E_{0} K_{iB} K_{mA2} [A] [B] k_{2} k_{6}\end{dmath}
 \begin{dsuspend}and\end{dsuspend}
 \begin{dmath}D = K_{iB} K_{mA} K_{mA2} [B] k_{6} + K_{iB} K_{mA} K_{mB} [A] k_{7} + K_{iB} K_{mA2} K_{mB} [A] k_{2} + K_{iB} K_{mA2} [A] [B] k_{2} + K_{iB} K_{mA2} [A] [B] k_{6} + K_{iB} K_{mB} [A]^{2} k_{2} + K_{iB} K_{mB} [A]^{2} k_{7} + K_{mA} K_{mA2} [B]^{2} k_{6} + K_{mA} K_{mB} [A] [B] k_{7}\end{dmath}
+\begin{dsuspend}
+    rearranging to:  \\  
+\end{dsuspend}
+\begin{dmath}
+    N = E_0 K_{mA2} [A] [B] k_2 k_6
+\end{dmath}
+\begin{dsuspend}
+    and
+\end{dsuspend}
+\begin{dmath}
+    D = K_{mA} \left(1 + \frac{[B]}{K_{iB}}\right) \left(\kmaa \B k_6 + \kmb \A k_7 \right) \\ + 
+    \kmaa \kmb \A k_2 + \kmaa \A \B \left(k_2 + k_6\right) + \kmb \A^2 \left(k_2 + k_7\right)
+\end{dmath}
 \end{dgroup}
+
 
 \end{document}
