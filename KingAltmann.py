@@ -348,18 +348,18 @@ class Reactions():
 
     def _pattern_to_equation(self, directedPattern: List[List[ReactionRate]]):
         def my_multiply(singlePattern: List[ReactionRate]):
-            return reduce(lambda x,y: x*y.to_value(),singlePattern, 1).factor()
+            return reduce(lambda x,y: x*y.to_value(),singlePattern, 1)
         
 
         return reduce(lambda x, y: x + my_multiply(y), directedPattern, 0)
     
     def numerator(self, enzymstate: Enzymestate):
         pat = self.directedPatterns(enzymstate)
-        return sympy.factor(self._pattern_to_equation(pat), deep=True)
+        return self._pattern_to_equation(pat)
 
     def denominator(self):
         nominators = [self._pattern_to_equation(self.directedPatterns(state)) for state in self._enzymeStates]
-        return sympy.factor(reduce(lambda x,y: x + y, nominators))
+        return reduce(lambda x,y: x + y, nominators)
     
     def product_term_summation(self, product_terms: List[List[Any]], with_full_numerator=True):
         def term_helper(enz_rate: List[Any]):
@@ -390,7 +390,7 @@ class Reactions():
         eq = self.solve_for_product()
         for el in self._null_rates:
             eq = eq.subs(el, 0)
-        return eq.factor()
+        return eq
 
 
 
@@ -473,19 +473,19 @@ with open("upo.txt", "r") as infile:
 
 # reactionR = ReactionRate("k1", "A")
 # print(reactionR.to_value().subs(symbols("A"), 1))
-for state in mechanism._enzymeStates:
-    print(f'Enzymestate: {state}')
-    print(mechanism.numerator(state))
+# for state in mechanism._enzymeStates:
+#     print(f'Enzymestate: {state}')
+#     print(mechanism.numerator(state))
 
-print(f'Denominator:\n{mechanism.denominator()}')
+# print(f'Denominator:\n{mechanism.denominator()}')
 
-print("simple")
-sympy.pprint(mechanism.solve_for_product(False))
+# print("simple")
+# sympy.pprint(mechanism.solve_for_product(False))
 
-print("complex")
-sympy.pprint(mechanism.solve_for_product())
+# print("complex")
+# sympy.pprint(mechanism.solve_for_product())
 
-print(DataFrame(mechanism._null_rates))
+# print(DataFrame(mechanism._null_rates))
 
 print("with zero")
 with_zero = mechanism.simplify_null_pathways()
@@ -501,21 +501,23 @@ k1, k2, k3, k4, k5, k6, k7, k8 = symbols("k1:9")
 
 
 eq = with_zero.subs(k8, k_8/k_ib)
+
 eq = eq.subs(k1, (k_1 + k2)/k_ma)
 eq = eq.subs(k4, (k_4+k7)/k_ma2)
 eq = eq.subs(k3, (k_3+k6)/k_mb)
-eq = sympy.pprint(eq.factor())
+
+#vp = symbols("v_p")
+#eq = eq.subs(k6, (vp*(k2+k6)/k2))
+#vp2 = symbols("v_p2")
+#eq = eq.subs(k7, (vp2*(k2+k7)/k2))
+eq = eq.factor()
+
+sympy.pprint(eq)
+
 
 with open("out2.tex", "w") as outfile:
-    outfile.write(sympy.latex(eq))
+     outfile.write(sympy.latex(eq))
 
 
-
-# l1, l2, l3, l4 = [1, 2, 6], [1, 4], [3, 4, 5], [5, 6]
-
-# reacs = [l1, l2, l3, l4]
-# res = Wang_algebra.wang_product(reacs)
-# res = [sorted(el) for el in res]
-# print(f'{len(res)} products: {res}')
 
 
