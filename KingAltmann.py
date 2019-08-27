@@ -1,9 +1,11 @@
 from typing import Optional, List, Tuple, Any
-from sympy import symbols
+from sympy import symbols, Eq
 import sympy
 from pandas import DataFrame
 from random import randint
 from functools import reduce
+import pylatex
+
 
 
 
@@ -169,6 +171,15 @@ class Reactions():
         self._null_rates = []
         """List of rates and concentrations that are considered to be 0, e.g. for irreversible reactions k-1 = 0, or for v_o conditions [P]=0""" 
 
+        self._substitutions = []
+        """List of Substitutions, e.g. k_ma = (k1 + k2)/k_2 in the form of Tuple(term_to_replace, replacement_term), e.g. (k1, (k_ma*k_2) - k2) """
+
+        self._report = {}
+
+        self._sympy_namespace = {}
+        """Namespace dictionary for recognition of substitution smybols, e,g, "k_m,A2" """
+
+
     def addReaction(self, reaction: UnitReaction):
         if len(self.reaction_from_Rate(reaction.rate)) > 0:
             raise AttributeError("rate constant already defined")
@@ -203,6 +214,9 @@ class Reactions():
 
     def add_product_consuming_complex(self, e: Enzymestate, r: ReactionRate):
         self._product_consuming_complex.append([e, r])
+    
+    def add_substitution(self, term1, with_term2):
+        self._substitutions.append((term1, with_term2))
 
     def as_text(self) -> str:
         res = []
@@ -392,80 +406,125 @@ class Reactions():
             eq = eq.subs(el, 0)
         return eq
 
+    def substitute(self):
+        eq = self.simplify_null_pathways()
+        for term1, with_term in self._substitutions:
+            print(f"term1: {term1}, term2:{with_term}")
+            eq = eq.subs(term1, with_term)
+        
+        return eq.factor()
+    
+    def report(self, outfile):
+        doc = pylatex.Document('article')
+        pass
+
+    def input(self, filename):
+        self._report["infile"] = filename
+        with open(filename, "r") as infile:
+            def check_input_items(els):
+                if len(els) != 3:
+                    raise TypeError(
+                        f"Infile line {count+1}:expected 3 comma separated values per line, instead got:\n{line}")
+            
+            def check_rate(rate):
+                if len(rate) < 1 or len(rate) > 2:
+                    raise TypeError(
+                        "Rate costant must be given as 1 parameter or 2 parameters seperated by \";\"")
+
+
+
+            
+            def sanitize_inputs(line):
+                els: List[str] = line.split(',')
+                check_input_items(els)
+                e1, rate, e2 = els[0].strip(), els[1].split(';'), els[2]
+                rate = [x.strip() for x in rate]
+                check_rate(rate)
+                return e1, rate, e2
+
+        
+
+            for count, line in enumerate(infile):
+                is_product_pos = False
+                is_product_neg = False
+                is_null_pathway = False
+                is_substitution = False
+                is_subsymbols = False
+
+
+                def is_reaction_line():
+                    res= (is_product_pos or is_product_neg or is_null_pathway or is_substitution or is_subsymbols)
+                    return not res
+                # skip comments and empty lines
+                if line.startswith("#") or len(line.strip()) == 0:
+                    continue
+                if line.startswith('=+:'):
+                    is_product_pos = True
+                    line=line.replace('=+:', '')
+                if line.startswith('=-:'):
+                    is_product_neg = True
+                    line=line.replace('=-:', '')
+                if line.startswith('=0:'):
+                    is_null_pathway = True
+                    line=line.replace('=0:', '')
+                if line.startswith("subs:"):
+                    is_substitution = True
+                    line = line.replace("subs:", '')
+                if line.startswith("subsymbols:"):
+                    is_subsymbols = True
+                    line = line.replace("subsymbols:", '')
+
+            
+                if is_product_pos or is_product_neg:
+                    e1, rate, _ = sanitize_inputs(line)
+                    es1 = Enzymestate(e1)
+                    rrate = ReactionRate(*rate)
+                    if is_product_pos:
+                        self.add_product_forming_complex(es1, rrate)
+                    if is_product_neg:
+                        self.add_product_consuming_complex(es1, rrate)
+                
+                if is_reaction_line():
+                    e1, rate, e2 = sanitize_inputs(line)
+                    es1 = Enzymestate(e1)
+                    es2 = Enzymestate(e2)
+                    rrate = ReactionRate(*rate)
+                    unitReaction = UnitReaction(es1, rrate, es2)
+                    if not rate[0] in self._sympy_namespace:
+                        self._sympy_namespace[rate[0]] = symbols(rate[0])
+                    self.addReaction(unitReaction)
+
+                
+                if is_null_pathway:
+                    for nulls in line.split(','):
+                        if not len(nulls.strip())==0:
+                            self._null_rates.append(symbols(nulls.strip()))
+                
+                if is_subsymbols:
+                    symbs = list(map(lambda x: x.strip(), line.split(",")))
+                    for symbol in symbs:
+                        if not symbol in self._sympy_namespace:
+                            self._sympy_namespace[symbol] = symbols(symbol)
+                
+                if is_substitution:
+                    res = list(map(lambda x: x.strip(), line.split(",")))
+                    map(lambda x: print(x), res)
+                    if len(res) != 2:
+                        raise AttributeError("Give substition in form of \"subs: term_to_replace, term_to_replace_with\", e.g. \"subs:k8, k_8/k_ib\"")
+                    self.add_substitution(symbols(res[0]), sympy.sympify(res[1], locals=self._sympy_namespace))
+                
+                
+        return self 
+
 
 
 
         
 # read Reaction mechanism
-mechanism = Reactions()
-
-with open("upo.txt", "r") as infile:
-    def check_input_items(els):
-        if len(els) != 3:
-            raise TypeError(
-                f"Infile line {count+1}:expected 3 comma separated values per line, instead got:\n{line}")
-    
-    def check_rate(rate):
-        if len(rate) < 1 or len(rate) > 2:
-            raise TypeError(
-                "Rate costant must be given as 1 parameter or 2 parameters seperated by \";\"")
+mechanism = Reactions().input("UPO.txt")
 
 
 
-    
-    def sanitize_inputs(line):
-        els: List[str] = line.split(',')
-        check_input_items(els)
-        e1, rate, e2 = els[0].strip(), els[1].split(';'), els[2]
-        rate = [x.strip() for x in rate]
-        check_rate(rate)
-        return e1, rate, e2
-
- 
-
-    for count, line in enumerate(infile):
-        is_product_pos = False
-        is_product_neg = False
-        is_null_pathway = False
-
-        def is_reaction_line():
-            res= (is_product_pos or is_product_neg or is_null_pathway)
-            return not res
-        # skip comments and empty lines
-        if line.startswith("#") or len(line.strip()) == 0:
-            continue
-        if line.startswith('=+:'):
-            is_product_pos = True
-            line=line.replace('=+:', '')
-        if line.startswith('=-:'):
-            is_product_neg = True
-            line=line.replace('=-:', '')
-        if line.startswith('=0:'):
-            is_null_pathway = True
-            line=line.replace('=0:', '')
-    
-        if is_product_pos or is_product_neg:
-            e1, rate, _ = sanitize_inputs(line)
-            es1 = Enzymestate(e1)
-            rrate = ReactionRate(*rate)
-            if is_product_pos:
-                mechanism.add_product_forming_complex(es1, rrate)
-            if is_product_neg:
-                mechanism.add_product_consuming_complex(es1, rrate)
-        
-        if is_reaction_line():
-            e1, rate, e2 = sanitize_inputs(line)
-            es1 = Enzymestate(e1)
-            es2 = Enzymestate(e2)
-            rrate = ReactionRate(*rate)
-            unitReaction = UnitReaction(es1, rrate, es2)
-            mechanism.addReaction(unitReaction)
-
-        
-        if is_null_pathway:
-            for nulls in line.split(','):
-                if not len(nulls.strip())==0:
-                    mechanism._null_rates.append(symbols(nulls.strip()))
             
 
         
@@ -487,36 +546,38 @@ with open("upo.txt", "r") as infile:
 
 # print(DataFrame(mechanism._null_rates))
 
-print("with zero")
-with_zero = mechanism.simplify_null_pathways()
-sympy.pprint(with_zero)
+#print("with zero")
+#with_zero = mechanism.simplify_null_pathways()
+#sympy.pprint(with_zero)
 
 
-k_ib = symbols("K_iB")
-k_ma = symbols("K_mA")
-k_ma2 = symbols("K_mA2")
-k_mb = symbols("K_mB")
-k_1, k_2, k_3, k_4, k_5, k_6, k_7, k_8 =symbols(["k_"+str((x+1)*-1) for x in range(8)])
-k1, k2, k3, k4, k5, k6, k7, k8 = symbols("k1:9")
+# k_ib = symbols("K_iB")
+# k_ma = symbols("K_mA")
+# k_ma2 = symbols("K_mA2")
+# k_mb = symbols("K_mB")
+# k_1, k_2, k_3, k_4, k_5, k_6, k_7, k_8 =symbols(["k_"+str((x+1)*-1) for x in range(8)])
+# k1, k2, k3, k4, k5, k6, k7, k8 = symbols("k1:9")
 
 
-eq = with_zero.subs(k8, k_8/k_ib)
+# mechanism.add_substitution(k8, k_8/k_ib)
+# mechanism.add_substitution(k1, (k_1 + k2)/k_ma)
+# mechanism.add_substitution(k4, (k_4+k7)/k_ma2)
+# mechanism.add_substitution(k3, (k_3+k6)/k_mb)
 
-eq = eq.subs(k1, (k_1 + k2)/k_ma)
-eq = eq.subs(k4, (k_4+k7)/k_ma2)
-eq = eq.subs(k3, (k_3+k6)/k_mb)
+sympy.pprint(mechanism.substitute())
+sympy.pprint(mechanism.substitute().factor())
 
 #vp = symbols("v_p")
 #eq = eq.subs(k6, (vp*(k2+k6)/k2))
 #vp2 = symbols("v_p2")
 #eq = eq.subs(k7, (vp2*(k2+k7)/k2))
-eq = eq.factor()
+#eq = eq.factor()
 
-sympy.pprint(eq)
+#sympy.pprint(eq)
 
 
-with open("out2.tex", "w") as outfile:
-     outfile.write(sympy.latex(eq))
+# with open("upo.tex", "w") as outfile:
+#      outfile.write(sympy.latex(eq))
 
 
 

@@ -18,33 +18,49 @@
 
 
 \begin{document}
-
-\section{Derivation of UPO mechanism using King-Altman algorithm}
-A rate equation for the mechanism depicted in Figure \ref{Upo-cycle} was derived using the algorithm as presented by King and Altman REPLACE REF. All possible pathways for a completely reversible reaction mechanism werde derived under fulln steady state assumption by employing Wang algebra as suggested by LAM/ PRIEST reference
+\section{Fitting of UPO with substrate inhibition}
+\begin{dgroup}
+\begin{dsuspend} Equation for Ping-Pong-Bi-Bi with substrate inhibition\\\end{dsuspend}
+\begin{dmath}v = \frac{V_{max} \A \B}{\kmb \A + \kma \B \left(1+ \frac{\B}{\kib}\right) + \A \B}\end{dmath}
+\end{dgroup}
 
 \begin{figure}[h]
+\label{PingPong}
 \centering
-\includegraphics[width=1\textwidth]{"PingPong Comp Inhib Katalase cycle"}
-\caption{Mechanism for UPO catalyzed hydroxylation including inhibition by substrate B and the catalase cycle. All rate limiting steps (k2, k6, k7) were assumed to be irreversible.}
+\includegraphics[width=1\textwidth]{"Km Vmax PingPongSubInhib1"}
+\includegraphics[width=1\textwidth]{"Km Vmax PingPongSubInhib2"}
+\caption{Fit of [EBA]/[H$_2$O$_2$] vs v with Ping-Pong + Substrate Inhibition.}
 \end{figure}
 
-simplifiCations.
 
-=0: k_-6, k_-7, [P], [Q], k_-2
+\section{Derivation of UPO catalase mechanism}
+A rate equation for the mechanism depicted in Figure \ref{Upo-cycle} was derived using the algorithm as presented by King and Altman
+% REPLACE REF.
+All possible pathways for a completely reversible reaction mechanism werde derived under full steady state assumption % by employing Wang algebra as suggested by LAM/ PRIEST reference
+%(Simplifications: $k_{-2}, k_{-6}, k_{-7}, [P], [Q] = 0$; Substitutions:  $\kib = \frac{k_{-8}}{k_8}, \kma = \frac{k_{-1} + k_2}{k_2}, \kmb = \frac{k_{-3}+k_6}{k_3},\kmaa = \frac{k_{-4} + k_7}{k_4}$
+\begin{figure}[h]
+\label{Upo-cycle}
+\centering
+\includegraphics[width=1\textwidth]{"PingPong Comp Inhib Katalase cycle"}
+\caption{Mechanism for UPO catalyzed hydroxylation including inhibition by substrate B and the catalase cycle. All rate limiting steps ($k_2$, $k_6$, $k_7$) were assumed to be irreversible.}
+\end{figure}
 
-
-substitutions:
-
-eq = with_zero.subs(k8, k_8/k_ib)
-
-eq = eq.subs(k1, (k_1 + k2)/k_ma)
-
-eq = eq.subs(k4, (k_4+k7)/k_ma2)
-
-eq = eq.subs(k3, (k_3+k6)/k_mb)
+%substitutions:
+%eq = with_zero.subs(k8, k_8/k_ib)
+%eq = eq.subs(k1, (k_1 + k2)/k_ma)
+%eq = eq.subs(k4, (k_4+k7)/k_ma2)
+%eq = eq.subs(k3, (k_3+k6)/k_mb)
 
 
 \begin{dgroup}
+\begin{dsuspend} Assumptions/simplifications:\\\end{dsuspend}
+\begin{dmath*}k_{-2}, k_{-6}, k_{-7}, [P], [Q] = 0 \end{dmath*}
+\begin{dsuspend}Substitutions:\end{dsuspend}
+\begin{dmath*}\kib = \frac{k_{-8}}{k_8} \end{dmath*}\begin{dmath*}
+\kma = \frac{k_{-1} + k_2}{k_2} \end{dmath*}\begin{dmath*}
+\kmb = \frac{k_{-3}+k_6}{k_3} \end{dmath*}\begin{dmath*}
+\kmaa = \frac{k_{-4} + k_7}{k_4}\end{dmath*}
+\begin{dsuspend}Enzyme velocity is given by:\end{dsuspend}
 \begin{dmath} v =\frac{N}{D}\end{dmath}
 \begin{dsuspend}where\\\end{dsuspend}
 
