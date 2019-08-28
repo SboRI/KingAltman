@@ -5,6 +5,9 @@ from pandas import DataFrame
 from random import randint
 from functools import reduce
 import pylatex
+from pylatex.base_classes import Environment
+from pylatex.package import Package
+import sys
 
 
 
@@ -56,12 +59,9 @@ class Wang_algebra():
                             #print(f'delete xy + xy = 0, els = {el}, {el2}')
                             _res[n_el] = []
                             _res[n_el2] = []
-
+                #remove all list elements that are empty
                 _res = list(filter(lambda el: len(el) > 0, _res))
             res = _res
-
-            #print(f'result: {res}')
-
         return res
 
 
@@ -76,9 +76,12 @@ class Enzymestate():
         if isinstance(other, self.__class__):
             return self.enzyme == other.enzyme
         return False
+
     def to_value(self):
         return self.enzyme
 
+    def as_latex(self):
+        return sympy.latex(self.enzyme)
 
 class ReactionRate():
 
@@ -91,7 +94,7 @@ class ReactionRate():
 
     def __str__(self):
         if self.reactant:
-            return self.name.__str__() + "[" + self.reactant.__str__() + "]"
+            return self.name.__str__() + self.reactant.__str__()
         else:
             return self.name.__str__()
 
@@ -104,6 +107,11 @@ class ReactionRate():
         if self.reactant:
             return self.name * self.reactant
         return self.name
+    
+    def as_latex(self):
+        if self.reactant:
+            return sympy.latex(self.name) + sympy.latex(self.reactant)
+        return sympy.latex(self.name)
 
 
 class UnitReaction():
@@ -120,6 +128,9 @@ class UnitReaction():
     def __str__(self):
         return f"{self.from_state} \t --{self.rate}--> \t {self.to_state}"
 
+    def as_latex(self):
+        return f'&{self.from_state.as_latex()} & \\xrightarrow{{{self.rate.as_latex()}}} & &{self.from_state.as_latex()}'
+        
 
 class BiDirReaction():
     """Constructs a Non/Bi directional rate from 2 unit reactions"""
@@ -175,9 +186,10 @@ class Reactions():
         """List of Substitutions, e.g. k_ma = (k1 + k2)/k_2 in the form of Tuple(term_to_replace, replacement_term), e.g. (k1, (k_ma*k_2) - k2) """
 
         self._report = {}
+        self._report["Reactions"] = []
 
-        self._sympy_namespace = {}
-        """Namespace dictionary for recognition of substitution smybols, e,g, "k_m,A2" """
+        self._sympy_namespace_repl: List[Tuple[str]] = []
+        """storage for replacement of variable names containing mathemtical symbols. Required for correct parsing using sympy.sympify() """
 
 
     def addReaction(self, reaction: UnitReaction):
@@ -186,6 +198,7 @@ class Reactions():
         self._reactions.append(reaction)
         self._add_enzymeStates(reaction)
         self._add_bidirectionalRates(reaction)
+        self._report["Reactions"].append(reaction.as_latex())
 
     def _add_enzymeStates(self, u: UnitReaction):
         """adds uniquely an Enzymestate to internal list of all _enzymeStates"""
@@ -209,6 +222,7 @@ class Reactions():
             self._bidirectionalRates.append(
                 BiDirReaction(reaction, reverseReaction)
             )
+
     def add_product_forming_complex(self, e: Enzymestate, r: ReactionRate):
         self._product_forming_complex.append([e, r])
 
@@ -217,6 +231,26 @@ class Reactions():
     
     def add_substitution(self, term1, with_term2):
         self._substitutions.append((term1, with_term2))
+    
+    def add_sympy_namespace_repl(self, text):
+        repl_chars = ["-", "+", "*", "/"]
+        repl_with = ["min", "pls", "star", "slash"]
+        for n, ch in enumerate(repl_chars):
+            if ch in text:
+                self._sympy_namespace_repl.append((text, text.replace(ch, repl_with[n])))
+    
+    def get_sympy_namespace_replacement(self, orig_name):
+        for el in self._sympy_namespace_repl:
+            if orig_name == el[0]:
+                return el[1]
+        return None 
+
+        
+    def get_sympy_namespace_original(self, repl_name):
+        for el in self._sympy_namespace_repl:
+            if repl_name == el[1]:
+                return el[0]
+        return None
 
     def as_text(self) -> str:
         res = []
@@ -356,8 +390,6 @@ class Reactions():
         res = []
         for pattern in kaPatterns:
             res.append(directedPattern(pattern))
-            #print(DataFrame(res))
-
         return res
 
     def _pattern_to_equation(self, directedPattern: List[List[ReactionRate]]):
@@ -414,13 +446,58 @@ class Reactions():
         
         return eq.factor()
     
-    def report(self, outfile):
+    def report(self, outfile=None):
+        class AllTT(Environment):
+            packages = [Package('alltt')]
+            escape = False
+            content_separator = "\n"
+        
+        class math(Environment):
+            packages = [Package('amsmath')]
+            escape = False
+            content_separator = "\n"
+        class Align(Environment):
+            packages = [Package('amsmath')]
+            escape = False
+            content_separator = "\n"
+        align = Align()
+        align_s = Align()
+        align_s._latex_name="align*"
+        
         doc = pylatex.Document('article')
-        pass
+        with doc.create(pylatex.Section("Full report")):
+            with doc.create(pylatex.Subsection("Input data")):
+                doc.append(f"Input file name: ")
+                with doc.create(AllTT()):
+                    doc.append(f'{self._report["infile"]}')
+                
+                doc.append(f"File contents:")
+                
+                with doc.create(AllTT()):
+                    
+                    doc.append(self._report["input"])
+                
+            with doc.create(pylatex.Subsection("Parsed_reactions")):
+                 txt = "Reactions after parsing \n"
+                 doc.append(txt)
+                 with doc.create(align_s):
+                     for el in self._report["Reactions"]:
+                        doc.append(el + "\\\\")
+
+
+
+                
+        
+        
+        if not outfile:
+            outfile = "KingAltman sln of"+self._report["infile"]
+        doc.generate_pdf(outfile, clean_tex=False,compiler='pdflatex')
 
     def input(self, filename):
         self._report["infile"] = filename
-        with open(filename, "r") as infile:
+        self._report["input"] = ""
+        with open(sys.path[0] + "\\" + filename, "r") as infile:
+            
             def check_input_items(els):
                 if len(els) != 3:
                     raise TypeError(
@@ -431,9 +508,6 @@ class Reactions():
                     raise TypeError(
                         "Rate costant must be given as 1 parameter or 2 parameters seperated by \";\"")
 
-
-
-            
             def sanitize_inputs(line):
                 els: List[str] = line.split(',')
                 check_input_items(els)
@@ -442,15 +516,14 @@ class Reactions():
                 check_rate(rate)
                 return e1, rate, e2
 
-        
-
             for count, line in enumerate(infile):
                 is_product_pos = False
                 is_product_neg = False
                 is_null_pathway = False
                 is_substitution = False
                 is_subsymbols = False
-
+                
+                self._report["input"]+=line
 
                 def is_reaction_line():
                     res= (is_product_pos or is_product_neg or is_null_pathway or is_substitution or is_subsymbols)
@@ -490,8 +563,8 @@ class Reactions():
                     es2 = Enzymestate(e2)
                     rrate = ReactionRate(*rate)
                     unitReaction = UnitReaction(es1, rrate, es2)
-                    if not rate[0] in self._sympy_namespace:
-                        self._sympy_namespace[rate[0]] = symbols(rate[0])
+                    
+                    self.add_sympy_namespace_repl(rate[0])
                     self.addReaction(unitReaction)
 
                 
@@ -502,17 +575,29 @@ class Reactions():
                 
                 if is_subsymbols:
                     symbs = list(map(lambda x: x.strip(), line.split(",")))
-                    for symbol in symbs:
-                        if not symbol in self._sympy_namespace:
-                            self._sympy_namespace[symbol] = symbols(symbol)
+                    symbs.sort(key=len, reverse=True)
+                    print(symbs)
                 
                 if is_substitution:
                     res = list(map(lambda x: x.strip(), line.split(",")))
-                    map(lambda x: print(x), res)
                     if len(res) != 2:
                         raise AttributeError("Give substition in form of \"subs: term_to_replace, term_to_replace_with\", e.g. \"subs:k8, k_8/k_ib\"")
-                    self.add_substitution(symbols(res[0]), sympy.sympify(res[1], locals=self._sympy_namespace))
-                
+                    #self.add_substitution(symbols(res[0]), sympy.sympify(res[1], locals=self._sympy_namespace))
+
+                    replaced_names = []
+
+                    for orig, replacement in self._sympy_namespace_repl:
+                        if orig in res[1]:
+                            replaced_names.append(orig)
+                            res[1] = res[1].replace(orig, replacement)
+
+                    rate_to_subs = symbols(res[0])
+                    rate_eq = sympy.sympify(res[1])
+
+                    for name in replaced_names:
+                        rate_eq = rate_eq.subs(symbols(self.get_sympy_namespace_replacement(name)), symbols(name))
+                    
+                    self.add_substitution(rate_to_subs, rate_eq)
                 
         return self 
 
@@ -522,9 +607,8 @@ class Reactions():
         
 # read Reaction mechanism
 mechanism = Reactions().input("UPO.txt")
-
-
-
+sympy.pprint(mechanism.substitute())
+mechanism.report()
             
 
         
@@ -564,8 +648,6 @@ mechanism = Reactions().input("UPO.txt")
 # mechanism.add_substitution(k4, (k_4+k7)/k_ma2)
 # mechanism.add_substitution(k3, (k_3+k6)/k_mb)
 
-sympy.pprint(mechanism.substitute())
-sympy.pprint(mechanism.substitute().factor())
 
 #vp = symbols("v_p")
 #eq = eq.subs(k6, (vp*(k2+k6)/k2))

@@ -1,0 +1,76 @@
+\documentclass{article}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{alltt}%
+\usepackage{amsmath}%
+%
+%
+%
+\begin{document}%
+\normalsize%
+\section{Full report}%
+\label{sec:Full report}%
+\subsection{Input data}%
+\label{subsec:Input data}%
+Input file name: %
+\begin{alltt}
+UPO.txt
+\end{alltt}%
+File contents:%
+\begin{alltt}
+#mathmatical symbols used in rate constant names (e.g. k-1) must be escaped with a preceding underscore: k_-1
+
+E, k1; [A], EA/EP
+EA/EP, k_-1, E
+EA/EP, k2, E*
+E*, k_-2, EA/EP
+E*, k3; [B], E*B/EQ
+E*B/EQ, k_-3, E*
+E*B/EQ, k6, E
+E, k_-6; [Q], E*B/EQ
+E*, k4; [A], E*A/EPR
+E*A/EPR, k_-4, E*
+E*A/EPR, k7, E
+E, k_-7; [P], E*A/EPR
+E, k8; [B], EB
+EB, k_-8, E
+
+=+: E*B/EQ, k6,
+=-: E, k_-6; [Q],
+
+=0: k_-6, k_-7, [P], [Q], k_-2
+
+subsymbols: k_ib, k_ma, k_ma2, k_mb
+subs:k8, k_-8/k_ib
+subs:k1, (k_-1 + k2)/k_ma
+subs:k4, (k_-4+k7)/k_ma2
+subs:k3, (k_-3+k6)/k_mb
+\end{alltt}
+
+%
+\subsection{Parsed\_reactions}%
+\label{subsec:Parsedreactions}%
+Reactions after parsing \newline%
+%
+\begin{align*}
+&E & \xrightarrow{k_{1}[A]} & &E\\
+&EA/EP & \xrightarrow{k_{-1}} & &EA/EP\\
+&EA/EP & \xrightarrow{k_{2}} & &EA/EP\\
+&E* & \xrightarrow{k_{-2}} & &E*\\
+&E* & \xrightarrow{k_{3}[B]} & &E*\\
+&E*B/EQ & \xrightarrow{k_{-3}} & &E*B/EQ\\
+&E*B/EQ & \xrightarrow{k_{6}} & &E*B/EQ\\
+&E & \xrightarrow{k_{-6}[Q]} & &E\\
+&E* & \xrightarrow{k_{4}[A]} & &E*\\
+&E*A/EPR & \xrightarrow{k_{-4}} & &E*A/EPR\\
+&E*A/EPR & \xrightarrow{k_{7}} & &E*A/EPR\\
+&E & \xrightarrow{k_{-7}[P]} & &E\\
+&E & \xrightarrow{k_{8}[B]} & &E\\
+&EB & \xrightarrow{k_{-8}} & &EB\\
+\end{align*}
+
+%
+\end{document}

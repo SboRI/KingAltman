@@ -1,0 +1,10 @@
+E, k1; A, ES
+ES, k-1, E
+ES, k3, EP
+EP, k-3, ES
+EP, k2, E
+E, k-2;P, EP
+
+=+: EP, k2,
+=-: EP, k-2,
+=0: P, k-2,

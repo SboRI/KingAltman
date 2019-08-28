@@ -1,0 +1,21 @@
+E, k1; H, EH
+EH, k_-1, E
+EH, k2, E*
+E*, k_-2; Q, EH
+E*, k6; H, E*H
+E*H, k_-6, E*
+E*H, k7, E
+E, k_-7; Q, E*H
+E*, k3; S, E*S
+E*S, k_-3, E*
+E*S, k4, EP
+EP, k_-4, E*S
+EP, k5, E
+E, k_-5; P, EP
+E, k8; S, ES
+ES, k_-8, E
+
+=+: EP, k5, 
+=-: E, k_-5; P,
+
+=0: k_-7, k_-2, k_-4, P, Q
