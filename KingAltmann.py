@@ -129,7 +129,7 @@ class UnitReaction():
         return f"{self.from_state} \t --{self.rate}--> \t {self.to_state}"
 
     def as_latex(self):
-        return f'&{self.from_state.as_latex()} & \\xrightarrow{{{self.rate.as_latex()}}} & &{self.from_state.as_latex()}'
+        return f'&{self.from_state.as_latex()} & \\xrightarrow{{{self.rate.as_latex()}}} & &{self.to_state.as_latex()}'
         
 
 class BiDirReaction():
@@ -477,7 +477,7 @@ class Reactions():
                     
                     doc.append(self._report["input"])
                 
-            with doc.create(pylatex.Subsection("Parsed_reactions")):
+            with doc.create(pylatex.Subsection("Parsed reactions")):
                  txt = "Reactions after parsing \n"
                  doc.append(txt)
                  with doc.create(align_s):
