@@ -5,13 +5,53 @@
 \usepackage{textcomp}%
 \usepackage{lastpage}%
 \usepackage{booktabs}%
-\usepackage{alltt}%
 \usepackage{amsmath}%
+\usepackage{breqn}%
+\usepackage{alltt}%
 %
 %
 %
 \begin{document}%
 \normalsize%
+\section{Results}%
+\label{sec:Results}%
+Product forming complex\newline%
+%
+\begin{equation*}
+\frac{dP}{dT} = \frac{E*B/EQk_{6}-Ek_{-6}[Q]}{\sum}
+\end{equation*}%
+Simplifications:\newline%
+%
+\begin{equation*}
+k_{-6},k_{-7},[P],[Q],k_{-2} = 0
+\end{equation*}%
+Substitutions%
+\begin{equation*}
+k_{8} = \frac{k_{-8}}{k_{ib}}
+\end{equation*}%
+\begin{equation*}
+k_{1} = \frac{1}{k_{ma}} \left(k_{2} + k_{-1}\right)
+\end{equation*}%
+\begin{equation*}
+k_{4} = \frac{1}{k_{ma2}} \left(k_{7} + k_{-4}\right)
+\end{equation*}%
+\begin{equation*}
+k_{3} = \frac{1}{k_{mb}} \left(k_{6} + k_{-3}\right)
+\end{equation*}%
+Resulting equation%
+\begin{equation*}
+\frac{dP}{dT} = v = \frac{N}{D}
+\end{equation*}%
+where%
+\begin{dmath*}
+N = E_{0} [A] [B] k_{2} k_{6} k_{ib} k_{ma2}
+\end{dmath*}%
+and%
+\begin{dmath*}
+D = [A]^{2} k_{2} k_{ib} k_{mb} + [A]^{2} k_{7} k_{ib} k_{mb} + [A] [B] k_{2} k_{ib} k_{ma2} + [A] [B] k_{6} k_{ib} k_{ma2} + [A] [B] k_{7} k_{ma} k_{mb} + [A] k_{2} k_{ib} k_{ma2} k_{mb} + [A] k_{7} k_{ib} k_{ma} k_{mb} + [B]^{2} k_{6} k_{ma} k_{ma2} + [B] k_{6} k_{ib} k_{ma} k_{ma2}
+\end{dmath*}
+
+%
 \section{Full report}%
 \label{sec:Full report}%
 \subsection{Input data}%
@@ -76,42 +116,36 @@ Reactions after parsing: \newline%
 %
 \subsection{Linear graph matrix}%
 \label{subsec:Linear graph matrix}%
-\begin{tabular}{lllllll}
-\toprule
-{} &                          0 &                          1 &                          2 &                          3 &                          4 &                          5 \\
-\midrule
-0 &                            &  $\frac{k_{-1}}{k_{1}[A]}$ &                            &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
-1 &  $\frac{k_{-1}}{k_{1}[A]}$ &                            &     $\frac{k_{-2}}{k_{2}}$ &                            &                            &                            \\
-2 &                            &     $\frac{k_{-2}}{k_{2}}$ &                            &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &                            \\
-3 &  $\frac{k_{-6}[Q]}{k_{6}}$ &                            &  $\frac{k_{-3}}{k_{3}[B]}$ &                            &                            &                            \\
-4 &  $\frac{k_{-7}[P]}{k_{7}}$ &                            &  $\frac{k_{-4}}{k_{4}[A]}$ &                            &                            &                            \\
-5 &  $\frac{k_{-8}}{k_{8}[B]}$ &                            &                            &                            &                            &                            \\
-\bottomrule
-\end{tabular}
+\[%
+\begin{bmatrix}%
+&\frac{k_{-1}}{k_{1}[A]}&&\frac{k_{-6}[Q]}{k_{6}}&\frac{k_{-7}[P]}{k_{7}}&\frac{k_{-8}}{k_{8}[B]}\\%
+\frac{k_{-1}}{k_{1}[A]}&&\frac{k_{-2}}{k_{2}}&&&\\%
+&\frac{k_{-2}}{k_{2}}&&\frac{k_{-3}}{k_{3}[B]}&\frac{k_{-4}}{k_{4}[A]}&\\%
+\frac{k_{-6}[Q]}{k_{6}}&&\frac{k_{-3}}{k_{3}[B]}&&&\\%
+\frac{k_{-7}[P]}{k_{7}}&&\frac{k_{-4}}{k_{4}[A]}&&&\\%
+\frac{k_{-8}}{k_{8}[B]}&&&&&%
+\end{bmatrix}%
+\]
 
 %
 \subsection{Kinetic matrix}%
 \label{subsec:Kinetic matrix}%
-\begin{tabular}{lllllll}
-\toprule
-{} &         0 &             1 &         2 &              3 &              4 &             5 \\
-\midrule
-0 &           &  $k_{1}$$[A]$ &           &  $k_{-6}$$[Q]$ &  $k_{-7}$$[P]$ &  $k_{8}$$[B]$ \\
-1 &  $k_{-1}$ &               &   $k_{2}$ &                &                &               \\
-2 &           &      $k_{-2}$ &           &   $k_{3}$$[B]$ &   $k_{4}$$[A]$ &               \\
-3 &   $k_{6}$ &               &  $k_{-3}$ &                &                &               \\
-4 &   $k_{7}$ &               &  $k_{-4}$ &                &                &               \\
-5 &  $k_{-8}$ &               &           &                &                &               \\
-\bottomrule
-\end{tabular}
+\[%
+\begin{bmatrix}%
+&k_{1}[A]&&k_{-6}[Q]&k_{-7}[P]&k_{8}[B]\\%
+k_{-1}&&k_{2}&&&\\%
+&k_{-2}&&k_{3}[B]&k_{4}[A]&\\%
+k_{6}&&k_{-3}&&&\\%
+k_{7}&&k_{-4}&&&\\%
+k_{-8}&&&&&%
+\end{bmatrix}%
+\]
 
 %
 \subsection{King{-}Altman Patterns}%
 \label{subsec:King{-}Altman Patterns}%
 \begin{tabular}{llllll}
 \toprule
-{} &                          0 &                          1 &                          2 &                          3 &                          4 \\
-\midrule
 0  &  $\frac{k_{-1}}{k_{1}[A]}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
 1  &  $\frac{k_{-1}}{k_{1}[A]}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
 2  &  $\frac{k_{-1}}{k_{1}[A]}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
@@ -130,21 +164,121 @@ Reactions after parsing: \newline%
 %
 \subsection{Directed Patterns}%
 \label{subsec:Directed Patterns}%
+\subsubsection{Directed Pattern for E*B/EQ}%
+\label{ssubsec:Directed Pattern for E*B/EQ}%
 \begin{tabular}{llllll}
 \toprule
-{} &             0 &         1 &             2 &             3 &             4 \\
-\midrule
-0  &  $k_{8}$$[B]$ &  $k_{-1}$ &       $k_{6}$ &       $k_{7}$ &      $k_{-2}$ \\
-1  &  $k_{8}$$[B]$ &  $k_{-1}$ &       $k_{6}$ &      $k_{-2}$ &      $k_{-4}$ \\
-2  &  $k_{8}$$[B]$ &  $k_{-1}$ &       $k_{7}$ &      $k_{-2}$ &      $k_{-3}$ \\
-3  &  $k_{8}$$[B]$ &  $k_{-1}$ &      $k_{-2}$ &      $k_{-3}$ &      $k_{-4}$ \\
+0  &  $k_{-6}$$[Q]$ &       $k_{-1}$ &        $k_{7}$ &       $k_{-8}$ &      $k_{-2}$ \\
+1  &  $k_{-6}$$[Q]$ &       $k_{-1}$ &       $k_{-8}$ &       $k_{-2}$ &      $k_{-4}$ \\
+2  &   $k_{3}$$[B]$ &        $k_{2}$ &   $k_{1}$$[A]$ &        $k_{7}$ &      $k_{-8}$ \\
+3  &   $k_{3}$$[B]$ &        $k_{2}$ &       $k_{-4}$ &   $k_{1}$$[A]$ &      $k_{-8}$ \\
+4  &   $k_{3}$$[B]$ &  $k_{-6}$$[Q]$ &       $k_{-1}$ &        $k_{7}$ &      $k_{-8}$ \\
+5  &   $k_{3}$$[B]$ &  $k_{-6}$$[Q]$ &       $k_{-4}$ &       $k_{-1}$ &      $k_{-8}$ \\
+6  &  $k_{-6}$$[Q]$ &       $k_{-1}$ &        $k_{7}$ &       $k_{-8}$ &  $k_{4}$$[A]$ \\
+7  &   $k_{3}$$[B]$ &       $k_{-4}$ &  $k_{-7}$$[P]$ &       $k_{-1}$ &      $k_{-8}$ \\
+8  &  $k_{-6}$$[Q]$ &   $k_{3}$$[B]$ &        $k_{7}$ &       $k_{-8}$ &       $k_{2}$ \\
+9  &  $k_{-6}$$[Q]$ &   $k_{3}$$[B]$ &       $k_{-8}$ &        $k_{2}$ &      $k_{-4}$ \\
+10 &  $k_{-6}$$[Q]$ &        $k_{7}$ &       $k_{-8}$ &   $k_{4}$$[A]$ &       $k_{2}$ \\
+11 &   $k_{3}$$[B]$ &        $k_{2}$ &       $k_{-4}$ &  $k_{-7}$$[P]$ &      $k_{-8}$ \\
+\bottomrule
+\end{tabular}
+
+%
+\subsubsection{Directed Pattern for E}%
+\label{ssubsec:Directed Pattern for E}%
+\begin{tabular}{llllll}
+\toprule
+0  &  $k_{-1}$ &   $k_{6}$ &       $k_{7}$ &      $k_{-8}$ &      $k_{-2}$ \\
+1  &  $k_{-1}$ &   $k_{6}$ &      $k_{-8}$ &      $k_{-2}$ &      $k_{-4}$ \\
+2  &  $k_{-1}$ &   $k_{7}$ &      $k_{-8}$ &      $k_{-2}$ &      $k_{-3}$ \\
+3  &  $k_{-1}$ &  $k_{-8}$ &      $k_{-2}$ &      $k_{-3}$ &      $k_{-4}$ \\
+4  &   $k_{6}$ &  $k_{-1}$ &       $k_{7}$ &      $k_{-8}$ &  $k_{3}$$[B]$ \\
+5  &   $k_{6}$ &  $k_{-1}$ &      $k_{-8}$ &  $k_{3}$$[B]$ &      $k_{-4}$ \\
+6  &   $k_{6}$ &   $k_{7}$ &      $k_{-8}$ &  $k_{3}$$[B]$ &       $k_{2}$ \\
+7  &   $k_{6}$ &  $k_{-8}$ &  $k_{3}$$[B]$ &       $k_{2}$ &      $k_{-4}$ \\
+8  &   $k_{7}$ &  $k_{-1}$ &       $k_{6}$ &      $k_{-8}$ &  $k_{4}$$[A]$ \\
+9  &   $k_{7}$ &  $k_{-1}$ &      $k_{-8}$ &  $k_{4}$$[A]$ &      $k_{-3}$ \\
+10 &   $k_{7}$ &   $k_{6}$ &      $k_{-8}$ &  $k_{4}$$[A]$ &       $k_{2}$ \\
+11 &   $k_{7}$ &  $k_{-8}$ &  $k_{4}$$[A]$ &       $k_{2}$ &      $k_{-3}$ \\
+\bottomrule
+\end{tabular}
+
+%
+\subsubsection{Directed Pattern for EA/EP}%
+\label{ssubsec:Directed Pattern for EA/EP}%
+\begin{tabular}{llllll}
+\toprule
+0  &  $k_{1}$$[A]$ &  $k_{-2}$ &        $k_{6}$ &        $k_{7}$ &      $k_{-8}$ \\
+1  &  $k_{1}$$[A]$ &  $k_{-2}$ &        $k_{6}$ &       $k_{-8}$ &      $k_{-4}$ \\
+2  &  $k_{1}$$[A]$ &  $k_{-2}$ &        $k_{7}$ &       $k_{-8}$ &      $k_{-3}$ \\
+3  &  $k_{1}$$[A]$ &  $k_{-2}$ &       $k_{-8}$ &       $k_{-3}$ &      $k_{-4}$ \\
+4  &  $k_{1}$$[A]$ &   $k_{6}$ &        $k_{7}$ &       $k_{-8}$ &  $k_{3}$$[B]$ \\
+5  &  $k_{1}$$[A]$ &   $k_{6}$ &       $k_{-8}$ &   $k_{3}$$[B]$ &      $k_{-4}$ \\
+6  &  $k_{1}$$[A]$ &   $k_{6}$ &        $k_{7}$ &       $k_{-8}$ &  $k_{4}$$[A]$ \\
+7  &  $k_{1}$$[A]$ &   $k_{7}$ &       $k_{-8}$ &   $k_{4}$$[A]$ &      $k_{-3}$ \\
+8  &      $k_{-2}$ &  $k_{-3}$ &  $k_{-6}$$[Q]$ &        $k_{7}$ &      $k_{-8}$ \\
+9  &      $k_{-2}$ &  $k_{-3}$ &       $k_{-4}$ &  $k_{-6}$$[Q]$ &      $k_{-8}$ \\
+10 &      $k_{-2}$ &  $k_{-4}$ &  $k_{-7}$$[P]$ &        $k_{6}$ &      $k_{-8}$ \\
+11 &      $k_{-2}$ &  $k_{-4}$ &       $k_{-3}$ &  $k_{-7}$$[P]$ &      $k_{-8}$ \\
+\bottomrule
+\end{tabular}
+
+%
+\subsubsection{Directed Pattern for E*}%
+\label{ssubsec:Directed Pattern for E*}%
+\begin{tabular}{llllll}
+\toprule
+0  &   $k_{2}$ &   $k_{1}$$[A]$ &       $k_{-8}$ &        $k_{6}$ &   $k_{7}$ \\
+1  &   $k_{2}$ &       $k_{-4}$ &   $k_{1}$$[A]$ &       $k_{-8}$ &   $k_{6}$ \\
+2  &   $k_{2}$ &       $k_{-3}$ &   $k_{1}$$[A]$ &       $k_{-8}$ &   $k_{7}$ \\
+3  &   $k_{2}$ &       $k_{-3}$ &       $k_{-4}$ &   $k_{1}$$[A]$ &  $k_{-8}$ \\
+4  &  $k_{-3}$ &  $k_{-6}$$[Q]$ &       $k_{-8}$ &       $k_{-1}$ &   $k_{7}$ \\
+5  &  $k_{-3}$ &       $k_{-4}$ &  $k_{-6}$$[Q]$ &       $k_{-8}$ &  $k_{-1}$ \\
+6  &  $k_{-4}$ &  $k_{-7}$$[P]$ &       $k_{-8}$ &       $k_{-1}$ &   $k_{6}$ \\
+7  &  $k_{-4}$ &       $k_{-3}$ &  $k_{-7}$$[P]$ &       $k_{-8}$ &  $k_{-1}$ \\
+8  &   $k_{2}$ &       $k_{-3}$ &  $k_{-6}$$[Q]$ &       $k_{-8}$ &   $k_{7}$ \\
+9  &   $k_{2}$ &       $k_{-3}$ &       $k_{-4}$ &  $k_{-6}$$[Q]$ &  $k_{-8}$ \\
+10 &   $k_{2}$ &       $k_{-4}$ &  $k_{-7}$$[P]$ &       $k_{-8}$ &   $k_{6}$ \\
+11 &   $k_{2}$ &       $k_{-4}$ &       $k_{-3}$ &  $k_{-7}$$[P]$ &  $k_{-8}$ \\
+\bottomrule
+\end{tabular}
+
+%
+\subsubsection{Directed Pattern for E*A/EPR}%
+\label{ssubsec:Directed Pattern for E*A/EPR}%
+\begin{tabular}{llllll}
+\toprule
+0  &  $k_{-7}$$[P]$ &       $k_{-8}$ &       $k_{-1}$ &        $k_{6}$ &      $k_{-2}$ \\
+1  &   $k_{4}$$[A]$ &        $k_{2}$ &   $k_{1}$$[A]$ &       $k_{-8}$ &       $k_{6}$ \\
+2  &  $k_{-7}$$[P]$ &       $k_{-8}$ &       $k_{-1}$ &       $k_{-2}$ &      $k_{-3}$ \\
+3  &   $k_{4}$$[A]$ &        $k_{2}$ &       $k_{-3}$ &   $k_{1}$$[A]$ &      $k_{-8}$ \\
+4  &  $k_{-7}$$[P]$ &       $k_{-8}$ &       $k_{-1}$ &        $k_{6}$ &  $k_{3}$$[B]$ \\
+5  &   $k_{4}$$[A]$ &       $k_{-3}$ &  $k_{-6}$$[Q]$ &       $k_{-8}$ &      $k_{-1}$ \\
+6  &   $k_{4}$$[A]$ &  $k_{-7}$$[P]$ &       $k_{-8}$ &       $k_{-1}$ &       $k_{6}$ \\
+7  &   $k_{4}$$[A]$ &  $k_{-7}$$[P]$ &       $k_{-3}$ &       $k_{-8}$ &      $k_{-1}$ \\
+8  &  $k_{-7}$$[P]$ &       $k_{-8}$ &        $k_{6}$ &   $k_{3}$$[B]$ &       $k_{2}$ \\
+9  &   $k_{4}$$[A]$ &        $k_{2}$ &       $k_{-3}$ &  $k_{-6}$$[Q]$ &      $k_{-8}$ \\
+10 &   $k_{4}$$[A]$ &  $k_{-7}$$[P]$ &        $k_{2}$ &       $k_{-8}$ &       $k_{6}$ \\
+11 &   $k_{4}$$[A]$ &  $k_{-7}$$[P]$ &        $k_{2}$ &       $k_{-3}$ &      $k_{-8}$ \\
+\bottomrule
+\end{tabular}
+
+%
+\subsubsection{Directed Pattern for EB}%
+\label{ssubsec:Directed Pattern for EB}%
+\begin{tabular}{llllll}
+\toprule
+0  &  $k_{8}$$[B]$ &  $k_{-1}$ &       $k_{7}$ &      $k_{-2}$ &      $k_{-3}$ \\
+1  &  $k_{8}$$[B]$ &  $k_{-1}$ &      $k_{-2}$ &      $k_{-3}$ &      $k_{-4}$ \\
+2  &  $k_{8}$$[B]$ &   $k_{6}$ &      $k_{-1}$ &       $k_{7}$ &      $k_{-2}$ \\
+3  &  $k_{8}$$[B]$ &   $k_{6}$ &      $k_{-1}$ &      $k_{-2}$ &      $k_{-4}$ \\
 4  &  $k_{8}$$[B]$ &   $k_{6}$ &      $k_{-1}$ &       $k_{7}$ &  $k_{3}$$[B]$ \\
 5  &  $k_{8}$$[B]$ &   $k_{6}$ &      $k_{-1}$ &  $k_{3}$$[B]$ &      $k_{-4}$ \\
-6  &  $k_{8}$$[B]$ &   $k_{6}$ &       $k_{7}$ &  $k_{3}$$[B]$ &       $k_{2}$ \\
-7  &  $k_{8}$$[B]$ &   $k_{6}$ &  $k_{3}$$[B]$ &       $k_{2}$ &      $k_{-4}$ \\
-8  &  $k_{8}$$[B]$ &   $k_{7}$ &      $k_{-1}$ &       $k_{6}$ &  $k_{4}$$[A]$ \\
-9  &  $k_{8}$$[B]$ &   $k_{7}$ &      $k_{-1}$ &  $k_{4}$$[A]$ &      $k_{-3}$ \\
-10 &  $k_{8}$$[B]$ &   $k_{7}$ &       $k_{6}$ &  $k_{4}$$[A]$ &       $k_{2}$ \\
+6  &  $k_{8}$$[B]$ &   $k_{6}$ &      $k_{-1}$ &       $k_{7}$ &  $k_{4}$$[A]$ \\
+7  &  $k_{8}$$[B]$ &   $k_{6}$ &       $k_{7}$ &  $k_{3}$$[B]$ &       $k_{2}$ \\
+8  &  $k_{8}$$[B]$ &   $k_{6}$ &  $k_{3}$$[B]$ &       $k_{2}$ &      $k_{-4}$ \\
+9  &  $k_{8}$$[B]$ &   $k_{6}$ &       $k_{7}$ &  $k_{4}$$[A]$ &       $k_{2}$ \\
+10 &  $k_{8}$$[B]$ &   $k_{7}$ &      $k_{-1}$ &  $k_{4}$$[A]$ &      $k_{-3}$ \\
 11 &  $k_{8}$$[B]$ &   $k_{7}$ &  $k_{4}$$[A]$ &       $k_{2}$ &      $k_{-3}$ \\
 \bottomrule
 \end{tabular}

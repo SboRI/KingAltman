@@ -164,8 +164,11 @@ class BiDirReaction():
     def __str__(self):
         return f"{self._fwd_reaction.rate}//{self._rev_reaction.rate}"
 
-    def as_latex(self):
-        return f"$\\frac{{{self._fwd_reaction.rate.as_latex()}}}{{{self._rev_reaction.rate.as_latex()}}}$"
+    def as_latex(self, add_math_mode=False, startStr = "$", stopStr = "$" ):
+        if not add_math_mode:
+            startStr = ""
+            stopStr = ""
+        return f"{startStr}\\frac{{{self._fwd_reaction.rate.as_latex()}}}{{{self._rev_reaction.rate.as_latex()}}}{stopStr}"
 
 
 class Reactions():
@@ -402,7 +405,10 @@ class Reactions():
         for pattern in kaPatterns:
             res.append(directedPattern(pattern))
         
-        self._report["directed_patterns"] = res
+        if not "directed_patterns" in self._report:
+             self._report["directed_patterns"] = []
+        if not any(map(lambda x: x[0] == state, self._report["directed_patterns"])):
+            self._report["directed_patterns"].append([state, res])
         return res
 
     def _pattern_to_equation(self, directedPattern: List[List[ReactionRate]]):
@@ -464,7 +470,7 @@ class Reactions():
             escape = False
             content_separator = "\n"
         
-        class math(Environment):
+        class Amsmath(Environment):
             packages = [Package('amsmath')]
             escape = False
             content_separator = "\n"
@@ -472,13 +478,60 @@ class Reactions():
             packages = [Package('amsmath')]
             escape = False
             content_separator = "\n"
+        class Breqn(Environment):
+            packages = [Package('breqn')]
+            escape = False
+            content_separator = "\n"
+        def equation(numbering=True):
+            numbering = "" if numbering else "*"
+            eq = Amsmath()
+            eq._latex_name = "equation" + numbering
+            return eq
+        def dmath(numbering=True):
+            numbering = "" if numbering else "*"
+            eq = Breqn()
+            eq._latex_name = "dmath" + numbering
+            return eq
         align = Align()
         align_s = Align()
         align_s._latex_name="align*"
         
         doc = pylatex.Document('article')
         doc.packages.append(Package('booktabs'))
-
+        with doc.create(pylatex.Section("Results")):
+            res = "Product forming complex\n"
+            doc.append(res)
+            dp_dt = equation(numbering=False)
+            producing_terms = "+".join([e.as_latex()+r.as_latex() for e,r in self._product_forming_complex])
+            consuming_terms = "-".join([e.as_latex()+r.as_latex() for e,r in self._product_consuming_complex])
+            res = f"\\frac{{dP}}{{dT}} = \\frac{{{producing_terms}-{consuming_terms}}}{{\\sum}}"
+            dp_dt.append(res)
+            doc.append(dp_dt)
+            doc.append("Simplifications:\n")
+            rates = equation(numbering=False)
+            zero_rates = ",".join([sympy.latex(x) for x in self._null_rates]) + " = 0"
+            rates.append(zero_rates)
+            doc.append(rates)
+            doc.append("Substitutions")
+            subs = [ f'{sympy.latex(x[0])} = {sympy.latex(x[1])}' for x in self._substitutions]
+            for el in subs:
+                term = equation(numbering= False)
+                term.append(el)
+                doc.append(term)
+            doc.append("Resulting equation")
+            eq_ = equation(numbering=False)
+            eq = f"\\frac{{dP}}{{dT}} = v = \\frac{{N}}{{D}}"
+            eq_.append(eq)
+            doc.append(eq_)
+            doc.append("where")
+            n,d = sympy.fraction(self.substitute())
+            eq = dmath(numbering=False)
+            eq.append("N = " + sympy.latex(n)) 
+            doc.append(eq)
+            doc.append("and")
+            eq = dmath(numbering=False)
+            eq.append("D = " + sympy.latex(d))
+            doc.append(eq)
         with doc.create(pylatex.Section("Full report")):
             with doc.create(pylatex.Subsection("Input data")):
                 doc.append(f"Input file name: ")
@@ -502,33 +555,38 @@ class Reactions():
                 table = []
                 for el in self._report["lin_graph_matrix"]:
                     table.append(map(lambda x: x.as_latex() if x else "" , el))
-                table = DataFrame(table).to_latex(escape=False)
-                doc.append(pylatex.NoEscape(table))
+                matrix = DataFrame(table).as_matrix()
+                latex_matrix = pylatex.Matrix(matrix, mtype="b")
+                doc.append(pylatex.Math(data=[latex_matrix]))
             
             with doc.create(pylatex.Subsection("Kinetic matrix")):
                 table = []
                 for el in self._report["kin_matrix"]:
-                    table.append(map(lambda x: x.as_latex(add_math_mode=True) if x else "", el))
-                table = DataFrame(table).to_latex(escape=False)
-                doc.append(pylatex.NoEscape(table))
+                    table.append(map(lambda x: x.as_latex() if x else "", el))
+                matrix = DataFrame(table).as_matrix()
+                latex_matrix = pylatex.Matrix(matrix, mtype="b")
+                doc.append(pylatex.Math(data=[latex_matrix]))
 
-            #res must be an preinitialzed array an th res from kapatterns added to it
-            ASKHJDKLAS
             with doc.create(pylatex.Subsection("King-Altman Patterns")):
                 table = []
                 for el in self._report["kaPatterns"]:
-                    table.append(map(lambda x: x.as_latex(), el))
-                table = DataFrame(table).to_latex(escape=False)
+                    table.append(map(lambda x: x.as_latex(add_math_mode=True), el))
+                table = DataFrame(table).to_latex(escape=False, header=False)
                 doc.append(pylatex.NoEscape(table))
 
-            #res must be an preinitialzed array an the res from directed patterns added to it
-            AUSDK
+            #Type of self._report["directed_patterns"] = List[[Enzymestate, 2dMatrix_for_enzymestate]]
             with doc.create(pylatex.Subsection("Directed Patterns")):
-                table = []
+                
                 for el in self._report["directed_patterns"]:
-                    table.append(map(lambda x: x.as_latex(add_math_mode=True), el))
-                table = DataFrame(table).to_latex(escape=False)
-                doc.append(pylatex.NoEscape(table))
+                    table = []
+                    with doc.create(pylatex.Subsubsection(f"Directed Pattern for {el[0]}")):
+                        for list_of_reac in el[1]:
+                            table.append([y.as_latex(add_math_mode=True) for y in list_of_reac])
+                        #table.append(list(map(lambda x: list(map(lambda y: y.as_latex(add_math_mode=True), x)), el[1])))
+                        la_table = DataFrame(table).to_latex(escape=False, header=False)
+                        
+                        doc.append(pylatex.NoEscape(la_table))
+                    
 
 
 
