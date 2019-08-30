@@ -35,7 +35,6 @@ class Wang_algebra():
         res: List[Any] = [[e] for e in elements.pop(0)]
         while len(elements) >= 1:
             term1 = elements.pop(0)
-            #print(f'current: {res}, multiplyinng with {term1}')
 
             _res = []
             for el in res:
@@ -47,7 +46,6 @@ class Wang_algebra():
                 for n_el, el in enumerate(_res):
                     # wang rule 1: x*x = 0
                     if len(set(el)) < len(el):
-                        #print(f'delete x*x = 0, el: {el}')
                         _res[n_el] = []
 
                     # wang rule 2: xy + yx = 0, iterate over all elements and compare if 2 sets of elements are equal.
@@ -56,7 +54,6 @@ class Wang_algebra():
                         if n_el2 == n_el:
                             break
                         if set(el) == set(el2):
-                            #print(f'delete xy + xy = 0, els = {el}, {el2}')
                             _res[n_el] = []
                             _res[n_el2] = []
                 #remove all list elements that are empty
@@ -108,10 +105,13 @@ class ReactionRate():
             return self.name * self.reactant
         return self.name
     
-    def as_latex(self):
+    def as_latex(self, add_math_mode=False, startStr = "$", stopStr = "$" ):
+        if not add_math_mode:
+            startStr = ""
+            stopStr = ""
         if self.reactant:
-            return sympy.latex(self.name) + sympy.latex(self.reactant)
-        return sympy.latex(self.name)
+            return startStr +  sympy.latex(self.name) + stopStr + startStr + sympy.latex(self.reactant) + stopStr
+        return startStr + sympy.latex(self.name) + stopStr
 
 
 class UnitReaction():
@@ -128,8 +128,11 @@ class UnitReaction():
     def __str__(self):
         return f"{self.from_state} \t --{self.rate}--> \t {self.to_state}"
 
-    def as_latex(self):
-        return f'&{self.from_state.as_latex()} & \\xrightarrow{{{self.rate.as_latex()}}} & &{self.to_state.as_latex()}'
+    def as_latex(self, add_math_mode=False, startStr = "$", stopStr = "$" ):
+        if not add_math_mode:
+            startStr = ""
+            stopStr = ""
+        return f'{startStr}&{self.from_state.as_latex()} & \\xrightarrow{{{self.rate.as_latex()}}} & &{self.to_state.as_latex()}{stopStr}'
         
 
 class BiDirReaction():
@@ -160,6 +163,9 @@ class BiDirReaction():
 
     def __str__(self):
         return f"{self._fwd_reaction.rate}//{self._rev_reaction.rate}"
+
+    def as_latex(self):
+        return f"$\\frac{{{self._fwd_reaction.rate.as_latex()}}}{{{self._rev_reaction.rate.as_latex()}}}$"
 
 
 class Reactions():
@@ -311,6 +317,8 @@ class Reactions():
                 _res = None if kin_matrix[n_es1][n_es2] == None else list(
                     filter(lambda biDirect: biDirect.contains_Rate(kin_matrix[n_es1][n_es2]), self._bidirectionalRates))[0]
                 res[n_es1][n_es2] = _res
+        
+        self._report["lin_graph_matrix"] = res
         return res
 
     def kinetic_matrix(self) -> List[List[Optional[ReactionRate]]]:
@@ -325,7 +333,8 @@ class Reactions():
                 reac = self.reaction_from_Reactants(es1, es2)
                 _res = reac.rate if reac else None
                 res[n_es1][n_es2] = _res
-
+        
+        self._report["kin_matrix"] = res
         return res
 
     def kaPatterns(self):
@@ -357,6 +366,8 @@ class Reactions():
             for n in rates:
                 _res.append(ratesDict[n])
             res.append(_res)
+
+        self._report["kaPatterns"] = res
         return res
 
     def directedPatterns(self, state: Enzymestate) -> List[List[ReactionRate]]:
@@ -390,6 +401,8 @@ class Reactions():
         res = []
         for pattern in kaPatterns:
             res.append(directedPattern(pattern))
+        
+        self._report["directed_patterns"] = res
         return res
 
     def _pattern_to_equation(self, directedPattern: List[List[ReactionRate]]):
@@ -441,7 +454,6 @@ class Reactions():
     def substitute(self):
         eq = self.simplify_null_pathways()
         for term1, with_term in self._substitutions:
-            print(f"term1: {term1}, term2:{with_term}")
             eq = eq.subs(term1, with_term)
         
         return eq.factor()
@@ -465,6 +477,8 @@ class Reactions():
         align_s._latex_name="align*"
         
         doc = pylatex.Document('article')
+        doc.packages.append(Package('booktabs'))
+
         with doc.create(pylatex.Section("Full report")):
             with doc.create(pylatex.Subsection("Input data")):
                 doc.append(f"Input file name: ")
@@ -478,11 +492,44 @@ class Reactions():
                     doc.append(self._report["input"])
                 
             with doc.create(pylatex.Subsection("Parsed reactions")):
-                 txt = "Reactions after parsing \n"
+                 txt = "Reactions after parsing: \n"
                  doc.append(txt)
                  with doc.create(align_s):
                      for el in self._report["Reactions"]:
                         doc.append(el + "\\\\")
+            
+            with doc.create(pylatex.Subsection("Linear graph matrix")):
+                table = []
+                for el in self._report["lin_graph_matrix"]:
+                    table.append(map(lambda x: x.as_latex() if x else "" , el))
+                table = DataFrame(table).to_latex(escape=False)
+                doc.append(pylatex.NoEscape(table))
+            
+            with doc.create(pylatex.Subsection("Kinetic matrix")):
+                table = []
+                for el in self._report["kin_matrix"]:
+                    table.append(map(lambda x: x.as_latex(add_math_mode=True) if x else "", el))
+                table = DataFrame(table).to_latex(escape=False)
+                doc.append(pylatex.NoEscape(table))
+
+            #res must be an preinitialzed array an th res from kapatterns added to it
+            ASKHJDKLAS
+            with doc.create(pylatex.Subsection("King-Altman Patterns")):
+                table = []
+                for el in self._report["kaPatterns"]:
+                    table.append(map(lambda x: x.as_latex(), el))
+                table = DataFrame(table).to_latex(escape=False)
+                doc.append(pylatex.NoEscape(table))
+
+            #res must be an preinitialzed array an the res from directed patterns added to it
+            AUSDK
+            with doc.create(pylatex.Subsection("Directed Patterns")):
+                table = []
+                for el in self._report["directed_patterns"]:
+                    table.append(map(lambda x: x.as_latex(add_math_mode=True), el))
+                table = DataFrame(table).to_latex(escape=False)
+                doc.append(pylatex.NoEscape(table))
+
 
 
 
@@ -576,7 +623,6 @@ class Reactions():
                 if is_subsymbols:
                     symbs = list(map(lambda x: x.strip(), line.split(",")))
                     symbs.sort(key=len, reverse=True)
-                    print(symbs)
                 
                 if is_substitution:
                     res = list(map(lambda x: x.strip(), line.split(",")))
@@ -607,7 +653,7 @@ class Reactions():
         
 # read Reaction mechanism
 mechanism = Reactions().input("UPO.txt")
-sympy.pprint(mechanism.substitute())
+mechanism.substitute()
 mechanism.report()
             
 

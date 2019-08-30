@@ -4,6 +4,7 @@
 \usepackage{lmodern}%
 \usepackage{textcomp}%
 \usepackage{lastpage}%
+\usepackage{booktabs}%
 \usepackage{alltt}%
 \usepackage{amsmath}%
 %
@@ -51,9 +52,9 @@ subs:k3, (k_-3+k6)/k_mb
 \end{alltt}
 
 %
-\subsection{Parsed\_reactions}%
-\label{subsec:Parsedreactions}%
-Reactions after parsing \newline%
+\subsection{Parsed reactions}%
+\label{subsec:Parsed reactions}%
+Reactions after parsing: \newline%
 %
 \begin{align*}
 &E & \xrightarrow{k_{1}[A]} & &EA/EP\\
@@ -71,6 +72,82 @@ Reactions after parsing \newline%
 &E & \xrightarrow{k_{8}[B]} & &EB\\
 &EB & \xrightarrow{k_{-8}} & &E\\
 \end{align*}
+
+%
+\subsection{Linear graph matrix}%
+\label{subsec:Linear graph matrix}%
+\begin{tabular}{lllllll}
+\toprule
+{} &                          0 &                          1 &                          2 &                          3 &                          4 &                          5 \\
+\midrule
+0 &                            &  $\frac{k_{-1}}{k_{1}[A]}$ &                            &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+1 &  $\frac{k_{-1}}{k_{1}[A]}$ &                            &     $\frac{k_{-2}}{k_{2}}$ &                            &                            &                            \\
+2 &                            &     $\frac{k_{-2}}{k_{2}}$ &                            &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &                            \\
+3 &  $\frac{k_{-6}[Q]}{k_{6}}$ &                            &  $\frac{k_{-3}}{k_{3}[B]}$ &                            &                            &                            \\
+4 &  $\frac{k_{-7}[P]}{k_{7}}$ &                            &  $\frac{k_{-4}}{k_{4}[A]}$ &                            &                            &                            \\
+5 &  $\frac{k_{-8}}{k_{8}[B]}$ &                            &                            &                            &                            &                            \\
+\bottomrule
+\end{tabular}
+
+%
+\subsection{Kinetic matrix}%
+\label{subsec:Kinetic matrix}%
+\begin{tabular}{lllllll}
+\toprule
+{} &         0 &             1 &         2 &              3 &              4 &             5 \\
+\midrule
+0 &           &  $k_{1}$$[A]$ &           &  $k_{-6}$$[Q]$ &  $k_{-7}$$[P]$ &  $k_{8}$$[B]$ \\
+1 &  $k_{-1}$ &               &   $k_{2}$ &                &                &               \\
+2 &           &      $k_{-2}$ &           &   $k_{3}$$[B]$ &   $k_{4}$$[A]$ &               \\
+3 &   $k_{6}$ &               &  $k_{-3}$ &                &                &               \\
+4 &   $k_{7}$ &               &  $k_{-4}$ &                &                &               \\
+5 &  $k_{-8}$ &               &           &                &                &               \\
+\bottomrule
+\end{tabular}
+
+%
+\subsection{King{-}Altman Patterns}%
+\label{subsec:King{-}Altman Patterns}%
+\begin{tabular}{llllll}
+\toprule
+{} &                          0 &                          1 &                          2 &                          3 &                          4 \\
+\midrule
+0  &  $\frac{k_{-1}}{k_{1}[A]}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+1  &  $\frac{k_{-1}}{k_{1}[A]}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+2  &  $\frac{k_{-1}}{k_{1}[A]}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+3  &  $\frac{k_{-1}}{k_{1}[A]}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+4  &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-1}}{k_{1}[A]}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+5  &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-1}}{k_{1}[A]}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+6  &  $\frac{k_{-6}[Q]}{k_{6}}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+7  &  $\frac{k_{-6}[Q]}{k_{6}}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+8  &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-1}}{k_{1}[A]}$ &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+9  &  $\frac{k_{-7}[P]}{k_{7}}$ &  $\frac{k_{-1}}{k_{1}[A]}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+10 &  $\frac{k_{-7}[P]}{k_{7}}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-6}[Q]}{k_{6}}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+11 &  $\frac{k_{-7}[P]}{k_{7}}$ &     $\frac{k_{-2}}{k_{2}}$ &  $\frac{k_{-3}}{k_{3}[B]}$ &  $\frac{k_{-4}}{k_{4}[A]}$ &  $\frac{k_{-8}}{k_{8}[B]}$ \\
+\bottomrule
+\end{tabular}
+
+%
+\subsection{Directed Patterns}%
+\label{subsec:Directed Patterns}%
+\begin{tabular}{llllll}
+\toprule
+{} &             0 &         1 &             2 &             3 &             4 \\
+\midrule
+0  &  $k_{8}$$[B]$ &  $k_{-1}$ &       $k_{6}$ &       $k_{7}$ &      $k_{-2}$ \\
+1  &  $k_{8}$$[B]$ &  $k_{-1}$ &       $k_{6}$ &      $k_{-2}$ &      $k_{-4}$ \\
+2  &  $k_{8}$$[B]$ &  $k_{-1}$ &       $k_{7}$ &      $k_{-2}$ &      $k_{-3}$ \\
+3  &  $k_{8}$$[B]$ &  $k_{-1}$ &      $k_{-2}$ &      $k_{-3}$ &      $k_{-4}$ \\
+4  &  $k_{8}$$[B]$ &   $k_{6}$ &      $k_{-1}$ &       $k_{7}$ &  $k_{3}$$[B]$ \\
+5  &  $k_{8}$$[B]$ &   $k_{6}$ &      $k_{-1}$ &  $k_{3}$$[B]$ &      $k_{-4}$ \\
+6  &  $k_{8}$$[B]$ &   $k_{6}$ &       $k_{7}$ &  $k_{3}$$[B]$ &       $k_{2}$ \\
+7  &  $k_{8}$$[B]$ &   $k_{6}$ &  $k_{3}$$[B]$ &       $k_{2}$ &      $k_{-4}$ \\
+8  &  $k_{8}$$[B]$ &   $k_{7}$ &      $k_{-1}$ &       $k_{6}$ &  $k_{4}$$[A]$ \\
+9  &  $k_{8}$$[B]$ &   $k_{7}$ &      $k_{-1}$ &  $k_{4}$$[A]$ &      $k_{-3}$ \\
+10 &  $k_{8}$$[B]$ &   $k_{7}$ &       $k_{6}$ &  $k_{4}$$[A]$ &       $k_{2}$ \\
+11 &  $k_{8}$$[B]$ &   $k_{7}$ &  $k_{4}$$[A]$ &       $k_{2}$ &      $k_{-3}$ \\
+\bottomrule
+\end{tabular}
 
 %
 \end{document}
