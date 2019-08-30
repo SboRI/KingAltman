@@ -710,7 +710,7 @@ class Reactions():
 
         
 # read Reaction mechanism
-mechanism = Reactions().input("UPO.txt")
+mechanism = Reactions().input("upo_inhibCPDI.txt")
 mechanism.substitute()
 mechanism.report()
             
