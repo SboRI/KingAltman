@@ -596,7 +596,8 @@ class Reactions():
         
         if not outfile:
             outfile = "KingAltman sln of"+self._report["infile"]
-        doc.generate_pdf(outfile, clean_tex=False,compiler='pdflatex')
+        doc.generate_pdf(sys.path[0]+"\\"+outfile, clean_tex=False,compiler='pdflatex')
+        print("generated outfile")
 
     def input(self, filename):
         self._report["infile"] = filename
@@ -710,7 +711,7 @@ class Reactions():
 
         
 # read Reaction mechanism
-mechanism = Reactions().input("upo_inhibCPDI.txt")
+mechanism = Reactions().input("upo.txt")
 mechanism.substitute()
 mechanism.report()
             

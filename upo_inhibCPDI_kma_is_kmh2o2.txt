@@ -8,8 +8,8 @@ E*, k3; [B], E*B/EQ
 E*B/EQ, k_-3, E*
 E*B/EQ, k6, E
 E, k_-6; [Q], E*B/EQ
-E, k4; [A], EA_i
-EA_i, k_-4, E
+E*, k4; [A], E*A/EPR
+E*A/EPR, k_-4, E*
 E, k8; [B], EB
 EB, k_-8, E
 
@@ -18,9 +18,9 @@ EB, k_-8, E
 
 =0: k_-6, [P], [Q], k_-2
 
-subsymbols: k_ib, k_ma, k_ih2o2, k_mb, v_max
+subsymbols: k_ib, k_ia, k_ma, k_mb, v
 subs:k8, k_-8/k_ib
-subs:k1, (k_-1 + k2)*k6/(k_ma*(k2+k6))
-subs:k4, k_-4/k_ih2o2
-subs:k3, (k_-3+k6)*k2/(k_mb*(k2+k6))
-subs:k2, (k6*v_max)/(k6-v_max)
+subs:k1, (k_-1 + k2)/k_ma
+subs:k4, k_-4/k_ia
+subs:k3, (k_-3+k6)/k_mb
+#subs:k2, k6*v/(k6-v)

@@ -20,6 +20,6 @@ EB, k_-8, E
 
 subsymbols: k_ib, k_ma, k_ih2o2, k_mb
 subs:k8, k_-8/k_ib
-subs:k1, (k_-1 + k2)/k_ma
+subs:k1, (k_-1 + k2)/(k_ma)
 subs:k4, k_-4/k_ih2o2
-subs:k3, (k_-3+k6)/k_mb
+subs:k3, (k_-3+k6)/(k_mb)
